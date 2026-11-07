@@ -18,9 +18,10 @@ import kotlin.math.sin
 
 /**
  * Realistic Sun & Sunlight Ray Animation on Jetpack Compose Canvas.
- * Reduced by ~40% in size for an elegant, refined ambient sky presence that never
- * covers temperature or weather information, while maintaining smooth glow and ray animations
- * and responsive scaling across phone and tablet screen sizes.
+ * Reduced by 50% in size for a neat, elegant sky presence that never overlaps
+ * temperature, city name, or weather information on the main Home Dashboard.
+ * Maintains smooth breathing pulse glow and rotating sunlight rays while remaining
+ * responsive across all Android phone and tablet screen sizes.
  */
 @Composable
 fun RealisticSunCanvas(
@@ -53,24 +54,24 @@ private fun DrawScope.drawRealisticSunlight(
     val minDim = min(w, h)
 
     // Subtle breathing pulse and gentle horizontal drift
-    val pulse = 0.94f + 0.06f * sin(timeSeconds * 1.4f)
-    val driftX = sin(timeSeconds * 0.35f) * 5.dp.toPx()
+    val pulse = 0.95f + 0.05f * sin(timeSeconds * 1.4f)
+    val driftX = sin(timeSeconds * 0.35f) * 3.5.dp.toPx()
 
-    // Positioned in the upper-right sky corner so it never covers hero temperature or text
+    // Positioned neatly in the upper-right sky corner to avoid temperature, city name, or cards
     val sunCenter = Offset(
-        x = w * 0.85f + driftX,
-        y = h * (if (isGoldenHour) 0.115f else 0.092f)
+        x = w * 0.86f + driftX,
+        y = h * (if (isGoldenHour) 0.105f else 0.085f)
     )
 
-    // Reduced by ~40% from previous 0.21f width ratio, responsive to min(width, height)
-    val baseRadius = (minDim * 0.125f * pulse).coerceIn(28.dp.toPx(), 72.dp.toPx())
+    // Reduced by 50% (from 0.125f to 0.0625f, clamped between 16.dp and 36.dp), responsive across all screens
+    val baseRadius = (minDim * 0.0625f * pulse).coerceIn(16.dp.toPx(), 36.dp.toPx())
 
     val outerGlowColor = if (isGoldenHour) Color(0x66F97316) else Color(0x55FBBF24)
     val midGlowColor = if (isGoldenHour) Color(0x38FB7185) else Color(0x24F59E0B)
     val coreColor = if (isGoldenHour) Color(0xFFFFEDD5) else Color(0xFFFFFBEB)
     val rimColor = if (isGoldenHour) Color(0xFFFB923C) else Color(0xFFFDE047)
 
-    // 1. Soft ambient solar corona
+    // 1. Soft ambient outer glowing circle (proportionally reduced by 50%)
     drawCircle(
         brush = Brush.radialGradient(
             colors = listOf(
@@ -86,7 +87,7 @@ private fun DrawScope.drawRealisticSunlight(
         center = sunCenter
     )
 
-    // 2. Refined rotating volumetric sunlight rays
+    // 2. Proportionally scaled rotating sunlight rays
     val rayCount = if (highQuality) 12 else 8
     val rotationDeg = (timeSeconds * 6f) % 360f
     rotate(degrees = rotationDeg, pivot = sunCenter) {
@@ -113,13 +114,13 @@ private fun DrawScope.drawRealisticSunlight(
                 ),
                 start = start,
                 end = end,
-                strokeWidth = (if (i % 2 == 0) 4.dp else 2.5.dp).toPx(),
+                strokeWidth = (if (i % 2 == 0) 2.dp else 1.25.dp).toPx(),
                 cap = StrokeCap.Round
             )
         }
     }
 
-    // 3. Glowing solar photosphere core (~40% smaller and crisp)
+    // 3. Glowing solar core (proportionally scaled down 50%)
     drawCircle(
         brush = Brush.radialGradient(
             colors = listOf(
@@ -135,18 +136,18 @@ private fun DrawScope.drawRealisticSunlight(
         center = sunCenter
     )
 
-    // 4. Subtle optical lens-flare bokeh rings (High Quality mode)
+    // 4. Subtle optical lens-flare bokeh rings (proportionally reduced)
     if (highQuality) {
-        val flareAlpha = if (isDarkTheme) 0.10f else 0.14f
+        val flareAlpha = if (isDarkTheme) 0.08f else 0.12f
         drawCircle(
             color = Color(0xFF38BDF8).copy(alpha = flareAlpha),
-            radius = 15.dp.toPx(),
-            center = Offset(w * 0.62f - driftX * 0.35f, h * 0.18f)
+            radius = 8.dp.toPx(),
+            center = Offset(w * 0.64f - driftX * 0.35f, h * 0.15f)
         )
         drawCircle(
             color = (if (isGoldenHour) Color(0xFFFB7185) else Color(0xFFA855F7)).copy(alpha = flareAlpha * 0.8f),
-            radius = 24.dp.toPx(),
-            center = Offset(w * 0.42f - driftX * 0.55f, h * 0.25f)
+            radius = 12.dp.toPx(),
+            center = Offset(w * 0.48f - driftX * 0.55f, h * 0.20f)
         )
     }
 }
