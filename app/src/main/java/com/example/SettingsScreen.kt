@@ -276,6 +276,16 @@ fun SettingsScreen(
                 }
             }
 
+            // Realistic Weather Animation Engine (Weather Animations, Battery Saver Mode, Animation Quality: High/Low)
+            item {
+                WeatherAnimationSettingsCard(
+                    settings = settings,
+                    onToggleAnimations = onToggleAnimations,
+                    onSelectAnimationQuality = onSelectAnimationQuality,
+                    onToggleBatterySaver = onToggleBatterySaver
+                )
+            }
+
             // 3. Weather Preferences (Celsius / Fahrenheit, Default City, Weather Refresh)
             item {
                 GlassmorphicCard(

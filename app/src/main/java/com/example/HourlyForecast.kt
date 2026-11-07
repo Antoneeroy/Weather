@@ -533,66 +533,56 @@ private fun SelectedHourDetailPanel(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.TouchApp,
-                    contentDescription = null,
-                    tint = palette.accentCyan,
-                    modifier = Modifier.size(18.dp)
-                )
-                Column {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = "Selected Time: $displayClockLabel ($formatted24h)",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = palette.primaryText,
-                            modifier = Modifier.testTag("hourly_detail_selected_time")
-                        )
-                        if (item.isNow) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .background(palette.accentEmerald.copy(alpha = 0.22f))
-                                    .padding(horizontal = 7.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = "Current Hour",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = palette.accentEmerald
-                                )
-                            }
-                        }
-                    }
-                    val metaLine = buildString {
-                        append("Hour ${hourIndex + 1} of $totalHours")
-                        if (!selectedDayLabel.isNullOrBlank()) {
-                            append(" • $selectedDayLabel")
-                        }
-                        if (!timeZoneLabel.isNullOrBlank()) {
-                            append(" • $timeZoneLabel")
-                        }
-                    }
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text(
-                        text = metaLine,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = palette.secondaryText
+                        text = "Selected Time: $displayClockLabel ($formatted24h)",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = palette.primaryText,
+                        modifier = Modifier.testTag("hourly_detail_selected_time")
                     )
+                    if (item.isNow) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(palette.accentCyan.copy(alpha = 0.22f))
+                                .border(1.dp, palette.accentCyan.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = "NOW",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = palette.accentCyan,
+                                maxLines = 1
+                            )
+                        }
+                    }
                 }
+                Spacer(modifier = Modifier.height(2.dp))
+                val metaLine = buildString {
+                    append("Hour ${hourIndex + 1} of $totalHours")
+                    if (!selectedDayLabel.isNullOrBlank()) {
+                        append(" • $selectedDayLabel")
+                    }
+                }
+                Text(
+                    text = metaLine,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = palette.secondaryText
+                )
             }
+
+            Spacer(modifier = Modifier.width(8.dp))
 
             // Step Previous / Next Hour Buttons (auto-scrolls the 24-hour LazyRow)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 IconButton(
                     onClick = onPreviousHour,
