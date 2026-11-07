@@ -835,6 +835,57 @@ fun SettingsScreen(
                                 )
                             }
                         }
+
+                        HorizontalDivider(color = palette.cardBorderSubtle)
+
+                        // Privacy Policy, Data Safety & Attribution Card Row
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(palette.pillBackground)
+                                .border(1.dp, palette.cardBorderSubtle, RoundedCornerShape(14.dp))
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.VerifiedUser,
+                                    contentDescription = null,
+                                    tint = palette.accentEmerald,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = stringResource(R.string.privacy_policy_title),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = palette.primaryText
+                                )
+                            }
+                            Text(
+                                text = stringResource(R.string.privacy_policy_desc),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = palette.secondaryText
+                            )
+                            Text(
+                                text = "• Location: Only requested when 'Use My GPS' is tapped or during setup. Used exclusively to query weather coordinates. Never logged, sold or shared.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = palette.mutedText
+                            )
+                            Text(
+                                text = "• Manual Use: Full functionality is available without location permission by searching any city.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = palette.mutedText
+                            )
+                            Text(
+                                text = stringResource(R.string.open_meteo_attribution),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = palette.accentCyan
+                            )
+                        }
                     }
                 }
             }

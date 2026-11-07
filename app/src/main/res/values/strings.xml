@@ -44,4 +44,7 @@
     <string name="location_denied_message">Location permission was denied. You can still search any city manually or grant permission to detect local weather.</string>
     <string name="location_unavailable_message">Device GPS location is currently unavailable. Please enable Location Services or search for a city manually.</string>
     <string name="widget_description">Premium Glassmorphism Weather Widget displaying live city temperature, condition, high/low range, and last updated time.</string>
+    <string name="privacy_policy_title">Privacy Policy &amp; Data Safety</string>
+    <string name="privacy_policy_desc">Location data is processed strictly on-device to query weather and is never shared, sold, or logged.</string>
+    <string name="open_meteo_attribution">Weather data provided by Open-Meteo under CC BY 4.0 license.</string>
 </resources>
