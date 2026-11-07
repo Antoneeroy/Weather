@@ -1,0 +1,6 @@
+{
+  "name": "Weather",
+  "description": "A premium Android Weather Application with Glassmorphism UI, real-time weather animations, hourly and 10-day forecasts, multi-city management, and customizable themes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
