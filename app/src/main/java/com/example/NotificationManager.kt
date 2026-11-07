@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -23,14 +24,18 @@ import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
 /**
- * Phase 5 Weather Notification Manager & WorkManager Background Scheduler.
- * Supports:
- * - Daily weather summary
- * - Morning weather notification
- * - Rain notification
- * - Severe weather notification
- * - Temperature change notification
- * - Enable/disable settings & user-selectable notification time
+ * Android Weather Notification Widget Manager & WorkManager Background Scheduler.
+ *
+ * Implements a real Android notification widget with custom RemoteViews layout:
+ * - Current city name
+ * - Current temperature
+ * - Weather condition & emoji icon
+ * - High and low temperature
+ * - Next 4 hours forecast with hourly temperature and weather icons
+ * - Last updated timestamp
+ * - Automatic background updates via WorkManager
+ * - Enable/disable toggles & selectable update schedules in Settings
+ * - Strict Android POST_NOTIFICATIONS permission checks
  */
 object WeatherNotificationHelper {
 
@@ -63,10 +68,10 @@ object WeatherNotificationHelper {
 
             val dailyChannel = NotificationChannel(
                 CHANNEL_DAILY_WEATHER,
-                "Daily & Morning Weather Summaries",
+                "Weather Forecast & Notification Widget",
                 SystemNotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = "Daily weather forecasts, morning briefings, and temperature trend updates"
+                description = "Live weather status, temperature, and hourly forecast widget notifications"
             }
 
             val alertsChannel = NotificationChannel(
@@ -157,53 +162,52 @@ object WeatherNotificationHelper {
         val todayPop = city.tenDayForecast.firstOrNull()?.rainProbability ?: 0
         var postedAny = false
 
-        // 1. Daily Weather Summary or Immediate Test Summary
+        // 1. Custom RemoteViews Weather Notification Widget (Compact + Expanded with 4-hour forecast)
         if (settings.dailySummaryNotification || forceSendSummary) {
-            postNotification(
+            postCustomWeatherWidgetNotification(
                 context = context,
-                channelId = CHANNEL_DAILY_WEATHER,
-                notificationId = NOTIF_ID_DAILY_SUMMARY,
-                title = "${city.cityName}: $tempStr • ${city.condition.displayName}",
-                body = "High $highStr / Low $lowStr • Rain chance $todayPop% • Scheduled at ${settings.notificationTime.label}"
+                city = city,
+                unit = unit,
+                notificationId = NOTIF_ID_DAILY_SUMMARY
             )
             postedAny = true
         }
 
-        // 2. Morning Weather Notification
+        // 2. Morning Weather Briefing
         if (settings.morningWeatherNotification && !forceSendSummary) {
             val sunrise = city.details.sunriseTime
-            postNotification(
+            postStandardNotification(
                 context = context,
                 channelId = CHANNEL_DAILY_WEATHER,
                 notificationId = NOTIF_ID_MORNING_BRIEFING,
-                title = "Morning Weather Briefing • ${city.cityName}",
-                body = "Currently $tempStr (${city.condition.displayName}). Today's high $highStr, UV Index ${city.details.uvIndex}, Sunrise $sunrise."
+                title = "Morning Briefing • ${city.cityName}",
+                body = "Currently $tempStr (${city.condition.displayName}). High $highStr, UV ${city.details.uvIndex}, Sunrise $sunrise."
             )
             postedAny = true
         }
 
-        // 3. Rain Notification
+        // 3. Rain Alert
         val isRainLikely = todayPop >= 50 || city.condition == WeatherConditionType.RAINY
         if (settings.rainNotification && isRainLikely) {
             val precipMm = city.tenDayForecast.firstOrNull()?.precipitationSumMm ?: 0.0
-            postNotification(
+            postStandardNotification(
                 context = context,
                 channelId = CHANNEL_WEATHER_ALERTS,
                 notificationId = NOTIF_ID_RAIN_ALERT,
-                title = "Rain Alert for ${city.cityName} ($todayPop% Chance)",
-                body = "Precipitation expected today (${String.format("%.1f", precipMm)} mm). Keep an umbrella handy."
+                title = "Rain Alert: ${city.cityName} ($todayPop% Chance)",
+                body = "Precipitation expected (${String.format("%.1f", precipMm)} mm). Keep an umbrella handy."
             )
             postedAny = true
         }
 
-        // 4. Severe Weather Notification (from WeatherAlertManager)
+        // 4. Severe Weather Notification
         if (settings.severeWeatherNotification) {
             val alerts = WeatherAlertManager.evaluateAlertsForCity(city, unit)
             val topAlert = alerts.firstOrNull {
                 it.severity == WeatherAlertSeverity.HIGH || it.severity == WeatherAlertSeverity.EXTREME
             }
             if (topAlert != null) {
-                postNotification(
+                postStandardNotification(
                     context = context,
                     channelId = CHANNEL_WEATHER_ALERTS,
                     notificationId = NOTIF_ID_SEVERE_WEATHER,
@@ -218,7 +222,7 @@ object WeatherNotificationHelper {
         if (settings.temperatureChangeNotification) {
             val tempChangeMsg = WeatherAlertManager.detectSignificantTemperatureChange(city, unit)
             if (tempChangeMsg != null) {
-                postNotification(
+                postStandardNotification(
                     context = context,
                     channelId = CHANNEL_DAILY_WEATHER,
                     notificationId = NOTIF_ID_TEMP_CHANGE,
@@ -232,7 +236,97 @@ object WeatherNotificationHelper {
         return postedAny
     }
 
-    private fun postNotification(
+    /**
+     * Posts a rich custom RemoteViews weather notification widget showing city, temp, high/low,
+     * weather condition icon, and next 4 hours forecast.
+     */
+    private fun postCustomWeatherWidgetNotification(
+        context: Context,
+        city: CityWeatherData,
+        unit: TemperatureUnit,
+        notificationId: Int
+    ) {
+        if (!hasNotificationPermission(context)) return
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            notificationId,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val emoji = WeatherWidgetUpdater.conditionEmoji(city.condition, city.wmoCode)
+        val tempText = formatTemperature(city.currentTempCelsius, unit)
+        val highText = formatTemperature(city.highTempCelsius, unit)
+        val lowText = formatTemperature(city.lowTempCelsius, unit)
+        val summaryLine = "${city.condition.displayName} • H: $highText L: $lowText"
+        val updatedTime = city.currentTimeDisplay
+
+        // 1. Compact View
+        val compactView = RemoteViews(context.packageName, R.layout.notification_weather_compact).apply {
+            setTextViewText(R.id.notif_weather_icon, emoji)
+            setTextViewText(R.id.notif_city_name, city.cityName)
+            setTextViewText(R.id.notif_condition_summary, summaryLine)
+            setTextViewText(R.id.notif_temperature_text, tempText)
+            setTextViewText(R.id.notif_updated_time, updatedTime)
+        }
+
+        // 2. Expanded View with next 4 hours forecast
+        val hours = city.hourlyForecast.take(4)
+        val h1 = hours.getOrNull(0)
+        val h2 = hours.getOrNull(1)
+        val h3 = hours.getOrNull(2)
+        val h4 = hours.getOrNull(3)
+        val todayPop = city.tenDayForecast.firstOrNull()?.rainProbability ?: 0
+
+        val expandedView = RemoteViews(context.packageName, R.layout.notification_weather_expanded).apply {
+            setTextViewText(R.id.notif_exp_weather_icon, emoji)
+            setTextViewText(R.id.notif_exp_city_name, city.cityName)
+            setTextViewText(R.id.notif_exp_condition_summary, summaryLine)
+            setTextViewText(R.id.notif_exp_temperature_text, tempText)
+            setTextViewText(R.id.notif_exp_rain_prob, "💧 Rain Chance: $todayPop%")
+            setTextViewText(R.id.notif_exp_updated_text, "Live • $updatedTime")
+
+            // Hour 1
+            setTextViewText(R.id.notif_h1_time, h1?.timeLabel?.ifBlank { "Now" } ?: "Now")
+            setTextViewText(R.id.notif_h1_icon, h1?.let { WeatherWidgetUpdater.conditionEmoji(it.condition, it.wmoCode) } ?: emoji)
+            setTextViewText(R.id.notif_h1_temp, h1?.let { formatTemperature(it.tempCelsius, unit) } ?: tempText)
+
+            // Hour 2
+            setTextViewText(R.id.notif_h2_time, h2?.timeLabel?.ifBlank { "+1h" } ?: "+1h")
+            setTextViewText(R.id.notif_h2_icon, h2?.let { WeatherWidgetUpdater.conditionEmoji(it.condition, it.wmoCode) } ?: emoji)
+            setTextViewText(R.id.notif_h2_temp, h2?.let { formatTemperature(it.tempCelsius, unit) } ?: tempText)
+
+            // Hour 3
+            setTextViewText(R.id.notif_h3_time, h3?.timeLabel?.ifBlank { "+2h" } ?: "+2h")
+            setTextViewText(R.id.notif_h3_icon, h3?.let { WeatherWidgetUpdater.conditionEmoji(it.condition, it.wmoCode) } ?: emoji)
+            setTextViewText(R.id.notif_h3_temp, h3?.let { formatTemperature(it.tempCelsius, unit) } ?: tempText)
+
+            // Hour 4
+            setTextViewText(R.id.notif_h4_time, h4?.timeLabel?.ifBlank { "+3h" } ?: "+3h")
+            setTextViewText(R.id.notif_h4_icon, h4?.let { WeatherWidgetUpdater.conditionEmoji(it.condition, it.wmoCode) } ?: emoji)
+            setTextViewText(R.id.notif_h4_temp, h4?.let { formatTemperature(it.tempCelsius, unit) } ?: tempText)
+        }
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_DAILY_WEATHER)
+            .setSmallIcon(android.R.drawable.ic_menu_compass)
+            .setCustomContentView(compactView)
+            .setCustomBigContentView(expandedView)
+            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        runCatching {
+            NotificationManagerCompat.from(context).notify(notificationId, notification)
+        }
+    }
+
+    private fun postStandardNotification(
         context: Context,
         channelId: String,
         notificationId: Int,
@@ -275,7 +369,7 @@ object WeatherNotificationHelper {
 
 /**
  * WorkManager CoroutineWorker that fetches real Open-Meteo weather in the background,
- * updates the local offline cache & home screen widget, and posts configured notifications.
+ * updates the local offline cache & home screen widget, and posts configured notification widgets.
  */
 class WeatherBackgroundSyncWorker(
     appContext: Context,

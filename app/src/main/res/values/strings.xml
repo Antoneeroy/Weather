@@ -32,10 +32,10 @@
     <string name="settings_fahrenheit">Fahrenheit (°F)</string>
     <string name="settings_animations_title">Weather Animations</string>
     <string name="settings_animations_desc">Smooth cloud movement, rain particles, sun rays &amp; starlight</string>
-    <string name="settings_about_section">App Information</string>
-    <string name="settings_app_version">Version 5.0.0 (Phase 5 • Complete Production Release)</string>
-    <string name="settings_architecture">Kotlin • Jetpack Compose • Open-Meteo API • WorkManager • AppWidget • DataStore</string>
-    <string name="settings_roadmap">Complete Production Build: Live Open-Meteo API, GPS, 10-Day &amp; Per-Day 24h Forecast, 10 Realistic Weather Animations, Notifications, Weather Alerts, Offline Cache &amp; Home Screen Widget.</string>
+    <string name="settings_about_section">About Weather</string>
+    <string name="settings_app_version">Version 5.0.0</string>
+    <string name="settings_architecture">Live Open-Meteo Weather Forecasts &amp; Geocoding</string>
+    <string name="settings_roadmap">A clean, accurate, and ad-free weather experience with live forecasts, hourly conditions, and home screen widgets.</string>
     <string name="refresh_weather">Refresh Weather</string>
     <string name="detect_gps_location">Use My GPS</string>
     <string name="retry_action">Retry</string>
@@ -45,6 +45,11 @@
     <string name="location_unavailable_message">Device GPS location is currently unavailable. Please enable Location Services or search for a city manually.</string>
     <string name="widget_description">Premium Glassmorphism Weather Widget displaying live city temperature, condition, high/low range, and last updated time.</string>
     <string name="privacy_policy_title">Privacy Policy &amp; Data Safety</string>
-    <string name="privacy_policy_desc">Location data is processed strictly on-device to query weather and is never shared, sold, or logged.</string>
+    <string name="privacy_policy_desc">Your privacy is fully protected. Location is used on-device only to look up local weather and is never tracked, stored, or shared.</string>
+    <string name="terms_title">Terms &amp; Conditions</string>
+    <string name="terms_desc">Weather forecasts and atmospheric data are provided for informational convenience using public meteorological services.</string>
+    <string name="about_developer_title">About Developer</string>
+    <string name="about_developer_desc">Built with care for everyday weather enthusiasts. Clean design, zero ads, and zero data tracking.</string>
+    <string name="copyright_text">© 2026 Weather App. All rights reserved.</string>
     <string name="open_meteo_attribution">Weather data provided by Open-Meteo under CC BY 4.0 license.</string>
 </resources>
