@@ -775,6 +775,11 @@ fun SettingsScreen(
                                     color = palette.secondaryText
                                 )
                                 Text(
+                                    text = "• Third-Party SDKs & APIs: Uses Google Play Services Location (on-device GPS when permitted), Square Retrofit/OkHttp/Moshi (HTTPS requests to Open-Meteo), and AndroidX Jetpack libraries (local DataStore & WorkManager).",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = palette.secondaryText
+                                )
+                                Text(
                                     text = stringResource(R.string.open_meteo_attribution),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = palette.accentCyan

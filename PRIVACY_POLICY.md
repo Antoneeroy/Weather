@@ -51,13 +51,23 @@ Weather forecasts and geocoding lookups are powered by **Open-Meteo** ([https://
 
 ---
 
-## 5. Children's Privacy
+## 5. Third-Party Libraries & SDK Disclosures
+
+This application includes the following open-source and platform libraries strictly for core app functionality (no advertising, behavioral analytics, or profiling SDKs are included):
+
+- **Google Play Services Location (`com.google.android.gms:play-services-location`)**: Used on-device via `FusedLocationProviderClient` to retrieve your device coordinates **only** when you explicitly grant location permission and tap **Use My GPS**.
+- **Square Retrofit, OkHttp & Moshi (`com.squareup.retrofit2`, `com.squareup.okhttp3`, `com.squareup.moshi`)**: Used to perform HTTPS requests to the Open-Meteo Weather and Geocoding APIs and parse JSON weather responses.
+- **AndroidX Jetpack Libraries (`Compose`, `DataStore Preferences`, `WorkManager`, `Core-KTX`, `Lifecycle`)**: Official Android Jetpack libraries used for rendering the user interface, storing your settings and cached weather snapshots locally on-device, and scheduling periodic background forecast updates.
+
+---
+
+## 6. Children's Privacy
 
 The Weather application does not collect personal information from anyone, including children under the age of 13.
 
 ---
 
-## 6. Changes to This Privacy Policy
+## 7. Changes to This Privacy Policy
 
 Any updates to this Privacy Policy will be published in the official GitHub repository at:  
 [https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md](https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md)

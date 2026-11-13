@@ -1,6 +1,20 @@
 package com.example
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.view.View
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -11,8 +25,14 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+import android.os.Looper
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 
 @RunWith(RobolectricTestRunner::class)
@@ -609,6 +629,281 @@ class ExampleRobolectricTest {
         vm.pinOrSyncHomeScreenWidget()
         assertNotNull(vm.uiState.value.notificationStatusMessage)
         assertTrue(vm.uiState.value.notificationStatusMessage!!.contains("Widget", ignoreCase = true))
+    }
+
+    @Test
+    @Config(sdk = [26])
+    fun `android 8_0 Oreo API 26 compatibility and manual city without location permission`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        assertEquals(26, android.os.Build.VERSION.SDK_INT)
+
+        // Verify notification channel creation and permission check on Android 8.0 (API 26)
+        assertTrue(WeatherNotificationHelper.hasNotificationPermission(context))
+        WeatherNotificationHelper.ensureNotificationChannels(context)
+
+        val vm = WeatherViewModel(appContext = null, autoFetchOnInit = false)
+
+        // User denies location permission -> app works via manual city selection
+        vm.onLocationPermissionDenied()
+        assertTrue(vm.uiState.value.gpsStatus is GpsLocationStatus.PermissionDenied)
+
+        val manualCity = createTestCity(id = "geo_tokyo", cityName = "Tokyo", regionAndCountry = "Tokyo, Japan")
+        vm.addSavedCity(manualCity)
+        assertEquals("Tokyo", vm.uiState.value.activeCity?.cityName)
+        assertEquals(24, vm.uiState.value.activeCity?.hourlyForecast?.size)
+        assertEquals(10, vm.uiState.value.activeCity?.tenDayForecast?.size)
+
+        // Verify widget update on API 26
+        WeatherWidgetUpdater.updateAllWidgets(
+            context = context,
+            city = manualCity,
+            temperatureUnit = TemperatureUnit.CELSIUS,
+            lastUpdatedLabel = "12:00 PM"
+        )
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    @Config(sdk = [35], qualifiers = "w360dp-h640dp-xhdpi")
+    fun `compact phone screen and network state transitions (online, offline, error, recovery)`() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val config = context.resources.configuration
+        assertEquals(360, config.screenWidthDp)
+
+        var networkMode = "ONLINE"
+        val dynamicForecastApi = object : WeatherApiService {
+            override suspend fun getForecast(
+                latitude: Double,
+                longitude: Double,
+                current: String,
+                hourly: String,
+                daily: String,
+                timezone: String,
+                forecastDays: Int
+            ): OpenMeteoForecastResponse {
+                return when (networkMode) {
+                    "OFFLINE" -> throw IOException("Disconnected")
+                    "ERROR" -> throw RuntimeException("HTTP 502")
+                    else -> OpenMeteoForecastResponse(
+                        latitude = latitude,
+                        longitude = longitude,
+                        timezone = "Europe/Paris",
+                        timezoneAbbreviation = "CET",
+                        utcOffsetSeconds = 3600,
+                        current = OpenMeteoCurrentDto(
+                            time = "2026-11-06T14:00",
+                            temperature2m = 19.0,
+                            relativeHumidity2m = 58,
+                            apparentTemperature = 18.0,
+                            isDay = 1,
+                            weatherCode = 1,
+                            surfacePressure = 1018.0,
+                            pressureMsl = 1019.0,
+                            windSpeed10m = 11.0,
+                            windDirection10m = 240,
+                            windGusts10m = 18.0,
+                            visibilityMeters = 19000.0,
+                            uvIndex = 4.0
+                        )
+                    )
+                }
+            }
+        }
+
+        val repo = WeatherRepository(context = null, weatherApiService = dynamicForecastApi)
+
+        // 1. Online
+        val onlineRes = repo.fetchLiveCityWeather("paris", "Paris", "France", 48.85, 2.35)
+        assertTrue(onlineRes is WeatherApiResult.Success)
+
+        // 2. Offline
+        networkMode = "OFFLINE"
+        val offlineRes = repo.fetchLiveCityWeather("paris", "Paris", "France", 48.85, 2.35)
+        assertTrue(offlineRes is WeatherApiResult.NoInternet)
+
+        // 3. API Error
+        networkMode = "ERROR"
+        val errorRes = repo.fetchLiveCityWeather("paris", "Paris", "France", 48.85, 2.35)
+        assertTrue(errorRes is WeatherApiResult.ApiError)
+
+        // 4. Restored Online
+        networkMode = "ONLINE"
+        val restoredRes = repo.fetchLiveCityWeather("paris", "Paris", "France", 48.85, 2.35)
+        assertTrue(restoredRes is WeatherApiResult.Success)
+    }
+
+    @Test
+    @Config(sdk = [35], qualifiers = "w840dp-h1180dp-xhdpi")
+    fun `expanded tablet screen qualifier verification`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        assertEquals(840, context.resources.configuration.screenWidthDp)
+        val vm = WeatherViewModel(appContext = null, autoFetchOnInit = false)
+        vm.addSavedCity(createTestCity())
+        assertNotNull(vm.uiState.value.activeCity)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [35], qualifiers = "w411dp-h891dp-xxhdpi")
+    fun `render and export 5 real application screenshots for Uptodown submission`() {
+        val sampleCity = createTestCity(
+            id = "geo_paris_live",
+            cityName = "Paris",
+            regionAndCountry = "Île-de-France, France",
+            latitude = 48.8566,
+            longitude = 2.3522
+        ).copy(
+            isLiveData = true,
+            cachedTimestampLabel = "2:00 PM"
+        )
+
+        val baseState = WeatherUiState(
+            cities = listOf(sampleCity),
+            selectedCityId = sampleCity.id,
+            favoriteCityIds = setOf(sampleCity.id),
+            selectedDayForDetail = sampleCity.tenDayForecast.first(),
+            syncState = WeatherDataSyncState.Success("2:00 PM"),
+            lastUpdatedTime = "2:00 PM",
+            settings = WeatherAppSettings(
+                animationsEnabled = false // static frame for crisp screenshot capture
+            )
+        )
+
+        val outputDirs = listOf(
+            File("../public/uptodown_assets/screenshots"),
+            File("public/uptodown_assets/screenshots")
+        )
+        outputDirs.forEach { it.mkdirs() }
+
+        fun renderScreenToPng(fileName: String, content: @androidx.compose.runtime.Composable () -> Unit) {
+            val controller = Robolectric.buildActivity(ComponentActivity::class.java).setup()
+            val activity = controller.get()
+            activity.setContent {
+                WeatherTheme(darkTheme = true) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(
+                                        Color(0xFF0B132B),
+                                        Color(0xFF1C2541),
+                                        Color(0xFF0F172A)
+                                    )
+                                )
+                            )
+                    ) {
+                        content()
+                    }
+                }
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+
+            val widthPx = 1080
+            val heightPx = 2340
+            val decorView = activity.window.decorView
+            decorView.measure(
+                View.MeasureSpec.makeMeasureSpec(widthPx, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(heightPx, View.MeasureSpec.EXACTLY)
+            )
+            decorView.layout(0, 0, widthPx, heightPx)
+            shadowOf(Looper.getMainLooper()).idle()
+            decorView.measure(
+                View.MeasureSpec.makeMeasureSpec(widthPx, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(heightPx, View.MeasureSpec.EXACTLY)
+            )
+            decorView.layout(0, 0, widthPx, heightPx)
+
+            val bitmap = Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            decorView.draw(canvas)
+
+            outputDirs.forEach { dir ->
+                val outFile = File(dir, fileName)
+                FileOutputStream(outFile).use { fos ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
+                }
+                assertTrue("Screenshot $fileName should exist and be non-empty", outFile.exists() && outFile.length() > 1000L)
+            }
+            controller.pause().stop().destroy()
+        }
+
+        // 1. Main Weather Home Screen
+        renderScreenToPng("01_main_weather_home.png") {
+            WeatherHomeScreen(
+                uiState = baseState,
+                onRefresh = {},
+                onRequestGpsWeather = {},
+                onSelectConditionOverride = {},
+                onSelectSceneOverride = {},
+                onOpenFullForecast = {},
+                onOpenCities = {},
+                onSelectDayDetail = {}
+            )
+        }
+
+        // 2. Current Weather Details (Atmospheric Details Grid)
+        renderScreenToPng("02_current_weather_details.png") {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(18.dp)
+            ) {
+                WeatherInformationCardsSection(
+                    details = sampleCity.details,
+                    temperatureUnit = TemperatureUnit.CELSIUS
+                )
+            }
+        }
+
+        // 3. 24-Hour Hourly Forecast & Selected Hour Detail Panel
+        renderScreenToPng("03_hourly_forecast_24h.png") {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(18.dp)
+            ) {
+                HourlyForecastStrip(
+                    hourlyItems = sampleCity.hourlyForecast,
+                    temperatureUnit = TemperatureUnit.CELSIUS,
+                    animationsEnabled = false,
+                    title = "Today (Nov 6) • Hourly Forecast",
+                    subtitleBadge = "12 AM – 11 PM • 24 Hours",
+                    timeZoneLabel = sampleCity.timeZoneOffsetLabel,
+                    selectedDayLabel = "Today, Nov 6",
+                    tenDays = sampleCity.tenDayForecast,
+                    selectedDayId = sampleCity.tenDayForecast.first().id,
+                    onSelectDay = {}
+                )
+            }
+        }
+
+        // 4. 10-Day Extended Forecast Screen
+        renderScreenToPng("04_ten_day_extended_forecast.png") {
+            ForecastScreen(
+                uiState = baseState,
+                onSelectDay = {},
+                onCloseDayDetail = {},
+                onRefresh = {},
+                onBackToHome = {},
+                onOpenCities = {},
+                onRequestGps = {}
+            )
+        }
+
+        // 5. Settings Screen
+        renderScreenToPng("05_settings_screen.png") {
+            SettingsScreen(
+                settings = baseState.settings,
+                onToggleDarkTheme = {},
+                onSelectTempUnit = {},
+                onToggleAnimations = {},
+                onSelectAnimationQuality = {},
+                onToggleBatterySaver = {},
+                onBackToHome = {},
+                savedCities = listOf(sampleCity)
+            )
+        }
     }
 }
 
