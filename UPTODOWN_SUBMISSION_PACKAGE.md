@@ -34,7 +34,8 @@
 - **License:** Free (No Ads, No In-App Purchases)
 - **Minimum Operating System:** Android 8.0 (API 26)
 - **Official Website:** `https://github.com/Antoneeroy/Weather`
-- **Privacy Policy URL:** `https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md`
+- **Privacy Policy URL (GitHub Pages):** `https://antoneeroy.github.io/Weather/privacy-policy.html` (or `https://antoneeroy.github.io/Weather/`)
+- **Privacy Policy URL (Direct GitHub Repository Fallback):** `https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md`
 
 ### Short Description (Under 80 characters)
 ```text

@@ -45,7 +45,7 @@
     <string name="widget_description">Premium Glassmorphism Weather Widget displaying live city temperature, condition, high/low range, and last updated time.</string>
     <string name="privacy_policy_title">Privacy Policy &amp; Data Safety</string>
     <string name="privacy_policy_desc">Your privacy is fully protected. Location is used on-device only to look up local weather and is never tracked, stored, or shared.</string>
-    <string name="privacy_policy_url_label">Privacy Policy URL: https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md</string>
+    <string name="privacy_policy_url_label">Privacy Policy URL: https://antoneeroy.github.io/Weather/privacy-policy.html (Repository copy: https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md)</string>
     <string name="terms_title">Terms &amp; Conditions</string>
     <string name="terms_desc">Weather forecasts and atmospheric data are provided for informational convenience using public meteorological services.</string>
     <string name="about_developer_title">About Developer</string>

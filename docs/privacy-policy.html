@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy – Weather (com.aistudio.weather.glsmph)</title>
+  <style>
+    :root {
+      --bg-primary: #0b132b;
+      --bg-card: #16203a;
+      --border-card: rgba(56, 189, 248, 0.25);
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --accent-cyan: #38bdf8;
+      --accent-emerald: #34d399;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 32px 16px 64px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(180deg, #0b132b 0%, #0f172a 100%);
+      color: var(--text-primary);
+      line-height: 1.65;
+    }
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 20px;
+      padding: 32px 28px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 1.9rem;
+      color: var(--text-primary);
+    }
+    h2 {
+      margin-top: 28px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 1.25rem;
+      color: var(--accent-cyan);
+    }
+    p, li {
+      color: var(--text-secondary);
+    }
+    strong {
+      color: var(--text-primary);
+    }
+    code {
+      background: rgba(15, 23, 42, 0.75);
+      color: var(--accent-cyan);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 0.92em;
+    }
+    a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 16px;
+      margin: 20px 0;
+    }
+    .meta-item span {
+      display: block;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--accent-emerald);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 0.94rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      vertical-align: top;
+    }
+    th {
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--text-primary);
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(52, 211, 153, 0.15);
+      color: var(--accent-emerald);
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <div class="badge">Public Privacy Policy • Verified for Uptodown &amp; App Store Review</div>
+    <h1>Privacy Policy for Weather</h1>
+
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span>App Name</span>
+        <strong>Weather</strong>
+      </div>
+      <div class="meta-item">
+        <span>Package Name</span>
+        <code>com.aistudio.weather.glsmph</code>
+      </div>
+      <div class="meta-item">
+        <span>Developer</span>
+        <strong>Antonee</strong>
+      </div>
+      <div class="meta-item">
+        <span>Effective / Updated</span>
+        <strong>November 13, 2026 (v5.1.0)</strong>
+      </div>
+    </div>
+
+    <h2>1. Overview &amp; Actual Data Practices</h2>
+    <p>
+      <strong>Weather</strong> (package name <code>com.aistudio.weather.glsmph</code>) is an Android weather forecast application developed by <strong>Antonee</strong>. This Privacy Policy accurately describes how the application handles device permissions, location coordinates, city search queries, notifications, local device storage, and third-party libraries based strictly on its actual source code.
+    </p>
+    <ul>
+      <li><strong>No Proprietary Backend Server:</strong> The developer does not operate any backend server or database. The app connects directly from your Android device to the public Open-Meteo APIs over encrypted HTTPS.</li>
+      <li><strong>No Personal Identity Collection:</strong> The app does not require registration and never collects your name, email address, phone number, contacts, media files, or payment details.</li>
+      <li><strong>No Ads or Behavioral Tracking:</strong> The app contains zero advertising SDKs, zero analytics trackers, and zero user profiling code.</li>
+    </ul>
+
+    <h2>2. Android Permissions Used</h2>
+    <p>The application declares only the following five permissions in <code>AndroidManifest.xml</code>:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Permission</th>
+          <th>Category</th>
+          <th>Actual Usage in Weather</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>android.permission.INTERNET</code></td>
+          <td>Install-time</td>
+          <td>Used to fetch live weather forecasts (<code>https://api.open-meteo.com/v1/forecast</code>) and city search results (<code>https://geocoding-api.open-meteo.com/v1/search</code>) over HTTPS.</td>
+        </tr>
+        <tr>
+          <td><code>android.permission.ACCESS_NETWORK_STATE</code></td>
+          <td>Install-time</td>
+          <td>Used via <code>ConnectivityManager</code> to check network availability and switch cleanly to locally cached weather data when offline.</td>
+        </tr>
+        <tr>
+          <td><code>android.permission.ACCESS_COARSE_LOCATION</code></td>
+          <td>Runtime (Optional)</td>
+          <td>Requested <strong>only on demand</strong> when you tap <strong>Use My GPS</strong> and accept the in-app <strong>Local Weather Access</strong> disclosure dialog.</td>
+        </tr>
+        <tr>
+          <td><code>android.permission.ACCESS_FINE_LOCATION</code></td>
+          <td>Runtime (Optional)</td>
+          <td>Requested alongside coarse location when you tap <strong>Use My GPS</strong> to obtain foreground GPS coordinates for local weather lookup.</td>
+        </tr>
+        <tr>
+          <td><code>android.permission.POST_NOTIFICATIONS</code></td>
+          <td>Runtime on Android 13+ (Optional)</td>
+          <td>Requested <strong>only</strong> when you enable notifications or tap <strong>Send Test Weather Notification</strong> in Settings on Android 13 (API 33) or newer.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><em>Note: The application does not request or use background location permission (<code>ACCESS_BACKGROUND_LOCATION</code>).</em></p>
+
+    <h2>3. Location Usage &amp; Manual City Selection</h2>
+    <ul>
+      <li><strong>On-Demand Foreground Location:</strong> Location access is never requested automatically on startup. When you tap <strong>Use My GPS</strong>, an in-app dialog explains why location access is needed and offers <strong>Allow Location</strong> or <strong>Search City Instead</strong>.</li>
+      <li><strong>How Coordinates Are Used:</strong> When granted, your latitude and longitude are read in the foreground via <code>FusedLocationProviderClient</code> (or system <code>LocationManager</code> fallback), resolved to a city name using the Android system <code>Geocoder</code>, and sent over HTTPS to the Open-Meteo Forecast API to load your weather forecast.</li>
+      <li><strong>Works Without Location Permission:</strong> You can decline location permission and use all forecast features by searching and saving cities manually in the <strong>Cities &amp; Search</strong> tab.</li>
+    </ul>
+
+    <h2>4. Weather API &amp; Network Communication</h2>
+    <ul>
+      <li><strong>Open-Meteo Forecast API (<code>https://api.open-meteo.com/v1/forecast</code>):</strong> Receives the latitude and longitude of your selected city over HTTPS to return current weather, 24-hour hourly forecast, and 10-day forecast metrics.</li>
+      <li><strong>Open-Meteo Geocoding API (<code>https://geocoding-api.open-meteo.com/v1/search</code>):</strong> Receives the city name you type into the search box (sanitized, up to 80 characters) over HTTPS to return matching cities and coordinates.</li>
+      <li><strong>Standard HTTPS Metadata:</strong> As with any standard internet request, Open-Meteo's servers receive standard HTTP metadata (such as your IP address) to deliver the response.</li>
+      <li><strong>HTTPS-Only Enforcement:</strong> Cleartext HTTP traffic is blocked (<code>android:usesCleartextTraffic="false"</code>), and HTTP request logging is restricted strictly to debug builds (disabled in release builds).</li>
+    </ul>
+
+    <h2>5. Local On-Device Storage &amp; Cloud Backup Policy</h2>
+    <ul>
+      <li><strong>Jetpack DataStore (<code>weather_phase5_preferences</code>):</strong> Stores your theme preference, temperature unit (<code>°C</code>/<code>°F</code>), animation quality settings, notification settings, saved city list (name, region, coordinates, favorite flag), and cached weather snapshots locally on your device.</li>
+      <li><strong>Widget SharedPreferences (<code>weather_widget_shared_state</code>):</strong> Stores the latest formatted weather summary displayed on the Android Home Screen Widget.</li>
+      <li><strong>Cloud Backup Disabled:</strong> <code>android:allowBackup="false"</code> is enforced in the manifest, and <code>backup_rules.xml</code> / <code>data_extraction_rules.xml</code> exclude local preferences and cached coordinates from automatic cloud backup.</li>
+      <li><strong>Deleting Your Data:</strong> You can delete individual cities, tap <strong>Clear All</strong> in the <strong>Cities &amp; Search</strong> screen to remove all saved locations, or clear app storage / uninstall the app at any time.</li>
+    </ul>
+
+    <h2>6. Notifications, Background Refresh &amp; Widget</h2>
+    <ul>
+      <li><strong>Optional Weather Notifications:</strong> When enabled in Settings, the app posts local notifications for Daily Weather Summaries, Rain Alerts, and estimated Severe Weather Advisories.</li>
+      <li><strong>Periodic Background Sync (<code>WorkManager</code>):</strong> When periodic refresh is enabled, <code>WeatherBackgroundSyncWorker</code> refreshes forecast data using the <strong>stored coordinates</strong> of your saved city in DataStore when connected to the internet, updating the local cache and Home Screen Widget. Setting refresh to <strong>Manual Only</strong> with notifications disabled cancels all background work.</li>
+    </ul>
+
+    <h2>7. Third-Party SDKs &amp; Libraries Disclosed</h2>
+    <ul>
+      <li><strong>Open-Meteo APIs</strong> (<a href="https://open-meteo.com" target="_blank" rel="noopener">https://open-meteo.com</a>) – Weather forecast and city geocoding data licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> (<a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener">Terms &amp; Privacy</a>).</li>
+      <li><strong>Google Play Services Location</strong> (<code>com.google.android.gms:play-services-location</code>) – Used for on-device foreground GPS lookup when location permission is granted (<a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a>).</li>
+      <li><strong>Square Retrofit, OkHttp &amp; Moshi</strong> – Open-source (Apache 2.0) HTTPS client and JSON serialization libraries running on-device.</li>
+      <li><strong>AndroidX Jetpack Libraries</strong> (<code>Compose</code>, <code>DataStore</code>, <code>WorkManager</code>, <code>Lifecycle</code>, <code>Activity</code>, <code>Core-KTX</code>) – Official open-source (Apache 2.0) Android Jetpack libraries.</li>
+    </ul>
+
+    <h2>8. Children's Privacy</h2>
+    <p>
+      The Weather application is a general-audience utility app and does not knowingly collect personal information from children or any other users.
+    </p>
+
+    <h2>9. Contact &amp; Official Links</h2>
+    <p>
+      If you have questions about this Privacy Policy, please contact the developer (<strong>Antonee</strong>) via the official GitHub repository:
+    </p>
+    <ul>
+      <li><strong>Official Repository:</strong> <a href="https://github.com/Antoneeroy/Weather">https://github.com/Antoneeroy/Weather</a></li>
+      <li><strong>Markdown Privacy Policy:</strong> <a href="https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md">https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md</a></li>
+      <li><strong>Issues &amp; Support:</strong> <a href="https://github.com/Antoneeroy/Weather/issues">https://github.com/Antoneeroy/Weather/issues</a></li>
+    </ul>
+  </main>
+</body>
+</html>

@@ -1,80 +1,128 @@
 # Privacy Policy for Weather (`com.aistudio.weather.glsmph`)
 
-**Effective Date:** November 13, 2026  
-**Application Name:** Weather  
-**Package Name:** `com.aistudio.weather.glsmph`  
-**Developer:** Antonee  
-**Official Repository:** [https://github.com/Antoneeroy/Weather](https://github.com/Antoneeroy/Weather)
+- **Effective Date:** November 13, 2026
+- **Last Updated:** November 13, 2026
+- **Application Name:** Weather
+- **Package Name:** `com.aistudio.weather.glsmph`
+- **Version:** `5.1.0` (`versionCode = 6`)
+- **Developer:** Antonee
+- **Official Repository:** [https://github.com/Antoneeroy/Weather](https://github.com/Antoneeroy/Weather)
+- **GitHub Pages Privacy Policy URL:** [https://antoneeroy.github.io/Weather/privacy-policy.html](https://antoneeroy.github.io/Weather/privacy-policy.html)
+- **Direct Public Repository Policy URL:** [https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md](https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md)
 
 ---
 
-## 1. Overview
+## 1. Introduction & Actual Data Practices Summary
 
-**Weather** (`com.aistudio.weather.glsmph`) is a consumer Android weather application developed by **Antonee**. We respect your privacy and are committed to complete transparency regarding how data is handled when you use the Weather application.
+**Weather** (`com.aistudio.weather.glsmph`) is an Android weather forecast application developed by **Antonee**. This Privacy Policy describes how the application handles permissions, location coordinates, city search queries, local device storage, notifications, and third-party services based strictly on the application's actual source code.
 
-This application does **not** require user accounts, does **not** display advertisements, does **not** include third-party tracking or analytics SDKs, and does **not** sell or share personal information with third parties.
-
----
-
-## 2. Information Accessed and How It Is Used
-
-### A. Device Location (`ACCESS_COARSE_LOCATION` / `ACCESS_FINE_LOCATION` – Optional)
-- **Why it is requested:** Location access is requested **only when you explicitly tap "Use My GPS" or "Allow Location"** so the app can determine your local coordinates and retrieve live local weather forecasts.
-- **How it is processed:** Your latitude and longitude coordinates are sent over an encrypted HTTPS connection directly to the public Open-Meteo Weather Forecast API (`https://api.open-meteo.com`) to fetch meteorological data for your area, and to the Android system `Geocoder` on-device to display your city/locality name.
-- **No background tracking or server storage:** Your location is never tracked in the background for advertising or profiling, never stored on developer-owned servers, and never shared with data brokers.
-- **Manual use without GPS:** You can decline location permission and use all forecast features of the application by searching for any city worldwide.
-
-### B. Worldwide City Search Queries
-- When you search for a city name in the **Cities & Search** screen, the search term is sent over HTTPS to the Open-Meteo Geocoding API (`https://geocoding-api.open-meteo.com`) solely to return matching geographic coordinates and city names.
-
-### C. Local Device Storage (Preferences & Offline Weather Cache)
-- Your selected temperature unit (`°C` / `°F`), theme preference (Dark, Light, or Automatic), animation quality settings, saved cities list, and most recent weather snapshot are stored **exclusively locally on your device** using Android Jetpack DataStore and SharedPreferences (for the home screen widget).
-- Android automatic cloud backup (`android:allowBackup="false"`) is disabled so your locally saved locations are not uploaded to external cloud backups without your knowledge.
-- You can clear all saved locations at any time using the **Clear All** button in the **Cities & Search** screen or by clearing the app's storage in Android Settings.
-
-### D. Notifications (`POST_NOTIFICATIONS` – Optional on Android 13+)
-- If you enable weather notifications in the **Settings** screen, the app requests the Android `POST_NOTIFICATIONS` permission to display local Daily Weather Summaries, Rain Alerts, and Severe Weather Advisories on your device.
+- **No Developer Backend Server:** The developer (**Antonee**) does not operate any proprietary backend server or database. The app communicates directly from your Android device to the public Open-Meteo meteorological APIs over HTTPS.
+- **No Personal Accounts or Identity Collection:** The app does not ask for or collect your name, email address, phone number, contacts, photos, or payment information.
+- **No Advertising or Analytics SDKs:** The app contains zero advertisements, zero behavioral tracking SDKs, and zero third-party analytics or crash-reporting trackers.
 
 ---
 
-## 3. Data Security
+## 2. Android Permissions Used by the App
 
-- **Encrypted Network Communication:** All network requests to Open-Meteo endpoints use HTTPS encryption (`android:usesCleartextTraffic="false"` is enforced in the application manifest).
-- **No Production Coordinate Logging:** Network request URLs containing coordinates are never logged in release builds.
-- **No API Keys or User Credentials:** The app does not collect names, email addresses, phone numbers, device identifiers, or payment data.
+The application declares only the following five permissions in `AndroidManifest.xml`:
 
----
+| Android Permission | Type | Exact Purpose in the App |
+| :--- | :--- | :--- |
+| `android.permission.INTERNET` | Install-time | Required to fetch live weather forecasts (`https://api.open-meteo.com/v1/forecast`) and city search matches (`https://geocoding-api.open-meteo.com/v1/search`) over encrypted HTTPS. |
+| `android.permission.ACCESS_NETWORK_STATE` | Install-time | Used via Android's `ConnectivityManager` to detect whether an internet connection is available and switch cleanly to locally cached weather data when offline. |
+| `android.permission.ACCESS_COARSE_LOCATION` | Runtime (Optional) | Requested **only** when you tap **Use My GPS** and confirm the in-app **Local Weather Access** disclosure dialog. Used to obtain approximate device coordinates for local weather lookup. |
+| `android.permission.ACCESS_FINE_LOCATION` | Runtime (Optional) | Requested alongside coarse location when you tap **Use My GPS** to obtain accurate foreground GPS coordinates for local weather lookup. |
+| `android.permission.POST_NOTIFICATIONS` | Runtime on Android 13+ (Optional) | Requested **only** when you enable weather notifications or tap **Send Test Weather Notification** in Settings on Android 13 (API 33) and newer. |
 
-## 4. Third-Party Meteorological Service
-
-Weather forecasts and geocoding lookups are powered by **Open-Meteo** ([https://open-meteo.com](https://open-meteo.com)) under the Creative Commons Attribution 4.0 International (CC BY 4.0) license. Open-Meteo processes standard HTTPS forecast requests to return meteorological telemetry. You can review Open-Meteo's terms and privacy practices at [https://open-meteo.com/en/terms](https://open-meteo.com/en/terms).
-
----
-
-## 5. Third-Party Libraries & SDK Disclosures
-
-This application includes the following open-source and platform libraries strictly for core app functionality (no advertising, behavioral analytics, or profiling SDKs are included):
-
-- **Google Play Services Location (`com.google.android.gms:play-services-location`)**: Used on-device via `FusedLocationProviderClient` to retrieve your device coordinates **only** when you explicitly grant location permission and tap **Use My GPS**.
-- **Square Retrofit, OkHttp & Moshi (`com.squareup.retrofit2`, `com.squareup.okhttp3`, `com.squareup.moshi`)**: Used to perform HTTPS requests to the Open-Meteo Weather and Geocoding APIs and parse JSON weather responses.
-- **AndroidX Jetpack Libraries (`Compose`, `DataStore Preferences`, `WorkManager`, `Core-KTX`, `Lifecycle`)**: Official Android Jetpack libraries used for rendering the user interface, storing your settings and cached weather snapshots locally on-device, and scheduling periodic background forecast updates.
+> **No Background Location Permission:** The app does **not** declare or request `ACCESS_BACKGROUND_LOCATION`.
 
 ---
 
-## 6. Children's Privacy
+## 3. Location Usage & Manual City Selection
 
-The Weather application does not collect personal information from anyone, including children under the age of 13.
+1. **On-Demand Foreground Access Only:**
+   - The app never requests location permission automatically on first launch. Instead, when you tap **Use My GPS**, an in-app disclosure dialog (**Local Weather Access**) explains why location is requested and gives you the choice between **Allow Location** and **Search City Instead**.
+2. **How Coordinates Are Processed:**
+   - When permission is granted, `LocationManager` uses Google Play Services `FusedLocationProviderClient` (with fallback to Android's system `LocationManager`) to read your current latitude and longitude in the foreground.
+   - Those coordinates are passed to Android's built-in `android.location.Geocoder` to display your locality/city name on-device, and are sent over HTTPS to the Open-Meteo Forecast API (`https://api.open-meteo.com/v1/forecast`) to retrieve your local weather forecast.
+3. **Full Functionality Without Location Permission:**
+   - Granting location permission is completely optional. If you deny or skip location permission, you can use the **Cities & Search** tab to search and save any city worldwide manually.
 
 ---
 
-## 7. Changes to This Privacy Policy
+## 4. Weather API & Network Communication
 
-Any updates to this Privacy Policy will be published in the official GitHub repository at:  
-[https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md](https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md)
+- **Open-Meteo Weather Forecast API (`https://api.open-meteo.com/v1/forecast`):**
+  - Receives the latitude and longitude of your selected city (or GPS location) over HTTPS to return current temperature, humidity, apparent temperature, WMO weather code, barometric pressure, wind speed/direction/gusts, visibility, UV index, 24-hour hourly forecast, and 10-day daily forecast.
+- **Open-Meteo Geocoding API (`https://geocoding-api.open-meteo.com/v1/search`):**
+  - Receives the city name text you type into the search bar (trimmed and sanitized, up to 80 characters) over HTTPS to return matching city names, regions/countries, and coordinates.
+- **Standard HTTPS Metadata:**
+  - As with any direct internet connection, Open-Meteo's servers receive standard HTTP request headers (including your device's IP address) necessary to route the response back to your device.
+- **Network Security:**
+  - Cleartext HTTP traffic is disabled across the entire application (`android:usesCleartextTraffic="false"`).
+  - Network request logging (`HttpLoggingInterceptor`) is restricted strictly to debug development builds (`if (BuildConfig.DEBUG)`) and is completely disabled in release builds.
 
 ---
 
-## 7. Contact Information
+## 5. Local On-Device Data Storage & Cloud Backup Policy
 
-If you have questions about this Privacy Policy or the Weather Android application, please open an issue or contact the developer (**Antonee**) via the official project repository:  
-[https://github.com/Antoneeroy/Weather](https://github.com/Antoneeroy/Weather)
+All user preferences and saved locations are stored **locally on your device** in the app's private sandbox:
+
+1. **Jetpack DataStore (`weather_phase5_preferences`):**
+   - Stores your appearance setting (Dark, Light, Automatic), temperature unit (`°C` or `°F`), weather animation toggles and quality tier (`High` / `Low`), battery saver setting, notification preferences, refresh interval, saved city records (city ID, name, region/country, latitude, longitude, favorite status), and the most recent cached weather JSON snapshot for offline viewing.
+2. **SharedPreferences (`weather_widget_shared_state`):**
+   - Stores the latest formatted city name, temperature, condition text, high/low values, and 4-hour forecast labels displayed by the Android Home Screen Widget (`WeatherWidgetReceiver`).
+3. **No Automatic Cloud Backup:**
+   - `android:allowBackup="false"` is enforced in `AndroidManifest.xml`, and `backup_rules.xml` / `data_extraction_rules.xml` explicitly exclude the app's DataStore and widget SharedPreferences files from cloud backups and device-transfer extraction.
+4. **How to Delete Your Stored Data:**
+   - You can remove individual saved cities using the delete icon on any city card, erase all saved locations at once using the **Clear All** button in the **Cities & Search** screen, or clear all app data / uninstall the app via Android System Settings.
+
+---
+
+## 6. Notifications, Background Refresh & Home Screen Widget
+
+- **Notification Channels:**
+  - `weather_daily_summary_channel` (*Weather Forecast & Notification Widget*): Used for optional Daily Weather Summary and Morning Briefing notifications, including a compact and expanded 4-hour forecast layout.
+  - `weather_severe_alerts_channel` (*Rain & Severe Weather Advisories*): Used for optional Rain Alerts and estimated Severe Weather Advisories derived from Open-Meteo forecast metrics.
+- **Background Sync via WorkManager:**
+  - When periodic refresh (Every 1 Hour, 3 Hours, 6 Hours, or 12 Hours) or notifications are enabled in Settings, `WeatherBackgroundSyncWorker` runs periodically via Android Jetpack `WorkManager` (requiring an active network connection).
+  - The background worker refreshes weather using the **stored coordinates** of your active/default saved city in DataStore — it does **not** access live device GPS in the background.
+  - Selecting **Manual Only** refresh and turning off **Enable Notifications** cancels all periodic background work.
+
+---
+
+## 7. Third-Party SDKs & Libraries Disclosed
+
+The application uses only the following third-party services and open-source libraries:
+
+1. **Open-Meteo APIs** ([https://open-meteo.com](https://open-meteo.com))
+   - **Role:** Provides meteorological forecast data and city geocoding search over HTTPS.
+   - **License & Terms:** Data licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); terms and privacy policy available at [https://open-meteo.com/en/terms](https://open-meteo.com/en/terms).
+2. **Google Play Services Location (`com.google.android.gms:play-services-location`)**
+   - **Role:** Provides `FusedLocationProviderClient` for on-device foreground location lookup when the user grants optional location permission.
+   - **Privacy Policy:** [https://policies.google.com/privacy](https://policies.google.com/privacy)
+3. **Square Open-Source Client Libraries (`Retrofit`, `OkHttp`, `Moshi`)**
+   - **Role:** Open-source (Apache 2.0) HTTP client and JSON parser running locally on your device to communicate with Open-Meteo over HTTPS.
+4. **AndroidX Jetpack Libraries (`Compose`, `DataStore`, `WorkManager`, `Lifecycle`, `Activity`, `Core-KTX`)**
+   - **Role:** Official open-source (Apache 2.0) Android Jetpack libraries used for UI rendering, local preference storage, and background work scheduling.
+
+---
+
+## 8. Children's Privacy
+
+The Weather application is a general-audience utility app and does not knowingly collect personal information from children or any other users.
+
+---
+
+## 9. Changes to This Privacy Policy
+
+Any updates to this Privacy Policy will be posted to the official repository and GitHub Pages site:
+- **GitHub Pages:** [https://antoneeroy.github.io/Weather/privacy-policy.html](https://antoneeroy.github.io/Weather/privacy-policy.html)
+- **GitHub Repository:** [https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md](https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md)
+
+---
+
+## 10. Contact the Developer
+
+If you have any questions or concerns regarding this Privacy Policy or the Weather app, please contact the developer (**Antonee**) by opening an issue on the official GitHub repository:  
+[https://github.com/Antoneeroy/Weather/issues](https://github.com/Antoneeroy/Weather/issues)
