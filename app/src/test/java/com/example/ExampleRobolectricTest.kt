@@ -7,6 +7,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,6 +18,86 @@ import java.io.IOException
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class ExampleRobolectricTest {
+
+    private fun createTestCity(
+        id: String = "geo_test_paris",
+        cityName: String = "Paris",
+        regionAndCountry: String = "Île-de-France, France",
+        latitude: Double = 48.8566,
+        longitude: Double = 2.3522
+    ): CityWeatherData {
+        val tenDays = (0 until 10).map { idx ->
+            val dayId = "${id}_d$idx"
+            val hours = SampleWeatherRepository.generate24HoursForDay(
+                dayId = dayId,
+                minTempCelsius = 9 + (idx % 3),
+                maxTempCelsius = 17 + (idx % 3),
+                condition = WeatherConditionType.SUNNY,
+                wmoCode = 1,
+                rainProbability = 10,
+                precipitationSumMm = 0.0,
+                windKmh = 13,
+                humidityPercent = 60,
+                isToday = idx == 0
+            )
+            DailyForecastItem(
+                id = dayId,
+                dayName = if (idx == 0) "Today" else "Day $idx",
+                dateShort = "Nov ${6 + idx}",
+                fullDateFormatted = "Nov ${6 + idx}, 2026",
+                condition = WeatherConditionType.SUNNY,
+                wmoCode = 1,
+                conditionLabel = "Mainly Clear",
+                minTempCelsius = 9 + (idx % 3),
+                maxTempCelsius = 17 + (idx % 3),
+                rainProbability = 10,
+                precipitationSumMm = 0.0,
+                sunriseTime = "7:47 AM",
+                sunsetTime = "5:21 PM",
+                windKmh = 13,
+                uvIndex = 4,
+                humidityPercent = 60,
+                hourlyItemsForDay = hours
+            )
+        }
+        return CityWeatherData(
+            id = id,
+            cityName = cityName,
+            regionAndCountry = regionAndCountry,
+            latitude = latitude,
+            longitude = longitude,
+            timeZoneOffsetLabel = "CET",
+            currentTimeDisplay = "2:00 PM",
+            currentDateDisplay = "Nov 6, 2026",
+            currentTempCelsius = 15,
+            feelsLikeCelsius = 14,
+            highTempCelsius = 17,
+            lowTempCelsius = 9,
+            condition = WeatherConditionType.SUNNY,
+            wmoCode = 1,
+            conditionDescription = "Mainly Clear",
+            airQualityIndex = 26,
+            airQualityLabel = "Good",
+            details = AtmosphericDetails(
+                humidityPercent = 60,
+                dewPointCelsius = 7,
+                windSpeedKmh = 13,
+                windDirection = "W",
+                windGustKmh = 20,
+                pressureHpa = 1020,
+                pressureTrend = "Steady",
+                visibilityKm = 18.0,
+                visibilityStatus = "Clear",
+                uvIndex = 4,
+                uvCategory = "Moderate",
+                sunriseTime = "7:47 AM",
+                sunsetTime = "5:21 PM",
+                daylightDuration = "9h 34m"
+            ),
+            tenDayForecast = tenDays,
+            hourlyForecast = tenDays.first().hourlyItemsForDay
+        )
+    }
 
     @Test
     fun `read app name from context`() {
@@ -190,7 +271,12 @@ class ExampleRobolectricTest {
     @Test
     fun `viewModel opens and closes ForecastDetailScreen for selected day`() {
         val vm = WeatherViewModel(appContext = null, autoFetchOnInit = false)
-        val firstDay = vm.uiState.value.activeCity.tenDayForecast.first()
+        assertTrue(vm.uiState.value.cities.isEmpty())
+        assertNull(vm.uiState.value.activeCity)
+
+        val sampleCity = createTestCity()
+        vm.addSavedCity(sampleCity)
+        val firstDay = vm.uiState.value.activeCity!!.tenDayForecast.first()
         assertNotNull(firstDay)
 
         vm.selectDayForDetail(firstDay, openDetailScreen = true)
@@ -203,7 +289,7 @@ class ExampleRobolectricTest {
 
     @Test
     fun `weather animation engine resolves all 10 realistic scenes from WMO codes and day or night state`() {
-        val baseCity = SampleWeatherRepository.getInitialCities().first()
+        val baseCity = createTestCity()
 
         // 1. Sunny (daytime WMO 0)
         val sunnyParams = WeatherAnimationEngine.resolveSceneParameters(
@@ -325,7 +411,8 @@ class ExampleRobolectricTest {
     @Test
     fun `every day in 10-day forecast has its own 24-hour hourly forecast when clicked`() {
         val vm = WeatherViewModel(appContext = null, autoFetchOnInit = false)
-        val tenDays = vm.uiState.value.activeCity.tenDayForecast
+        vm.addSavedCity(createTestCity())
+        val tenDays = vm.uiState.value.activeCity!!.tenDayForecast
         assertEquals(10, tenDays.size)
 
         tenDays.forEach { dayItem ->
@@ -339,7 +426,7 @@ class ExampleRobolectricTest {
 
     @Test
     fun `weather alert manager evaluates real meteorological advisories and distinguishes from official warnings`() {
-        val baseCity = SampleWeatherRepository.getInitialCities().first()
+        val baseCity = createTestCity()
 
         // 1. Thunderstorm + High Wind + Heavy Rain
         val stormCity = baseCity.copy(
@@ -370,18 +457,54 @@ class ExampleRobolectricTest {
     }
 
     @Test
-    fun `phase 5 viewModel manages favorite cities, default city, theme modes, notifications, and widget`() {
+    fun `phase 5 viewModel manages empty initial saved locations, empty popular cities, favorite cities, default city, clear all, theme modes, notifications, and widget`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val vm = WeatherViewModel(appContext = null, autoFetchOnInit = false)
 
+        // Initial 5 preset saved & favorite locations and Popular World Cities are cleaned (both empty)
+        assertTrue(SampleWeatherRepository.getInitialCities().isEmpty())
+        assertTrue(SampleWeatherRepository.discoverableCities.isEmpty())
+        assertTrue(vm.uiState.value.cities.isEmpty())
+        assertTrue(vm.uiState.value.favoriteCityIds.isEmpty())
+        assertNull(vm.uiState.value.activeCity)
+        assertNull(vm.uiState.value.selectedCityId)
+
+        // Add searched/user cities
+        val paris = createTestCity(id = "geo_paris", cityName = "Paris")
+        val mumbai = createTestCity(
+            id = "geo_mumbai",
+            cityName = "Mumbai",
+            regionAndCountry = "Maharashtra, India",
+            latitude = 19.0760,
+            longitude = 72.8777
+        )
+        vm.addSavedCity(paris)
+        vm.addSavedCity(mumbai)
+        assertEquals(2, vm.uiState.value.cities.size)
+
         // Toggle favorite city
-        assertFalse(vm.uiState.value.favoriteCityIds.contains("tokyo_jp"))
-        vm.toggleFavoriteCity("tokyo_jp")
-        assertTrue(vm.uiState.value.favoriteCityIds.contains("tokyo_jp"))
+        assertFalse(vm.uiState.value.favoriteCityIds.contains(paris.id))
+        vm.toggleFavoriteCity(paris.id)
+        assertTrue(vm.uiState.value.favoriteCityIds.contains(paris.id))
 
         // Set default startup city
-        vm.setDefaultCity("london_uk")
-        assertEquals("london_uk", vm.uiState.value.settings.defaultCityId)
+        vm.setDefaultCity(mumbai.id)
+        assertEquals(mumbai.id, vm.uiState.value.settings.defaultCityId)
+
+        // Remove individual city down to 1, then down to 0
+        vm.removeCity(paris.id)
+        assertEquals(1, vm.uiState.value.cities.size)
+        vm.removeCity(mumbai.id)
+        assertTrue(vm.uiState.value.cities.isEmpty())
+        assertNull(vm.uiState.value.activeCity)
+
+        // Re-add and verify clearAllSavedCities
+        vm.addSavedCity(paris)
+        vm.addSavedCity(mumbai)
+        vm.clearAllSavedCities()
+        assertTrue(vm.uiState.value.cities.isEmpty())
+        assertTrue(vm.uiState.value.favoriteCityIds.isEmpty())
+        assertNull(vm.uiState.value.selectedCityId)
 
         // Theme modes (Dark, Light, Auto)
         vm.setThemeMode(ThemeModeOption.LIGHT, systemIsDark = true)
@@ -403,10 +526,63 @@ class ExampleRobolectricTest {
         WeatherNotificationHelper.ensureNotificationChannels(context)
         WeatherWidgetUpdater.updateAllWidgets(
             context = context,
-            city = vm.uiState.value.activeCity,
+            city = paris,
             temperatureUnit = TemperatureUnit.CELSIUS,
             lastUpdatedLabel = "10:30 AM"
         )
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `repository validates coordinates and sanitizes search queries`() = runTest {
+        var capturedQuery: String? = null
+        val fakeForecastApi = object : WeatherApiService {
+            override suspend fun getForecast(
+                latitude: Double,
+                longitude: Double,
+                current: String,
+                hourly: String,
+                daily: String,
+                timezone: String,
+                forecastDays: Int
+            ): OpenMeteoForecastResponse {
+                throw AssertionError("Forecast API should not be called for invalid coordinates")
+            }
+        }
+        val fakeGeocodingApi = object : GeocodingService {
+            override suspend fun searchLocations(
+                name: String,
+                count: Int,
+                language: String,
+                format: String
+            ): GeocodingSearchResponse {
+                capturedQuery = name
+                return GeocodingSearchResponse(results = emptyList())
+            }
+        }
+
+        val repo = WeatherRepository(
+            context = null,
+            weatherApiService = fakeForecastApi,
+            geocodingService = fakeGeocodingApi
+        )
+
+        val nanResult = repo.fetchLiveCityWeather("bad1", "Bad", "Nowhere", Double.NaN, 10.0)
+        assertTrue(nanResult is WeatherApiResult.ApiError)
+
+        val outOfRangeLat = repo.fetchLiveCityWeather("bad2", "Bad", "Nowhere", 95.0, 10.0)
+        assertTrue(outOfRangeLat is WeatherApiResult.ApiError)
+
+        val outOfRangeLon = repo.fetchLiveCityWeather("bad3", "Bad", "Nowhere", 45.0, -185.0)
+        assertTrue(outOfRangeLon is WeatherApiResult.ApiError)
+
+        val searchResult = repo.searchCities("  Tokyo\n\r\t  ")
+        assertTrue(searchResult is WeatherApiResult.Success)
+        assertEquals("Tokyo", capturedQuery)
+
+        val emptyControlSearch = repo.searchCities("\u0000\n\t  ")
+        assertTrue(emptyControlSearch is WeatherApiResult.Success)
+        assertTrue((emptyControlSearch as WeatherApiResult.Success).data.isEmpty())
     }
 }
 

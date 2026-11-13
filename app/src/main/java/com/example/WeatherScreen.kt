@@ -56,7 +56,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import java.util.Locale
 
 @Composable
 fun WeatherHomeScreen(
@@ -77,19 +79,20 @@ fun WeatherHomeScreen(
     val activeScene = uiState.activeSceneParameters.scene
 
     // Track which day's 24-hour forecast (12 AM to 11 PM) is displayed on the Home Dashboard (defaults to Today)
-    var selectedHourlyDayId by remember(city.id) {
-        mutableStateOf(city.tenDayForecast.firstOrNull()?.id)
+    var selectedHourlyDayId by remember(city?.id) {
+        mutableStateOf(city?.tenDayForecast?.firstOrNull()?.id)
     }
-    val activeHourlyDay = city.tenDayForecast.find { it.id == selectedHourlyDayId }
-        ?: city.tenDayForecast.firstOrNull()
+    val activeHourlyDay = city?.tenDayForecast?.find { it.id == selectedHourlyDayId }
+        ?: city?.tenDayForecast?.firstOrNull()
 
-    val fullDay24Hours = remember(activeHourlyDay, city.hourlyForecast) {
+    val fullDay24Hours = remember(activeHourlyDay, city?.hourlyForecast) {
+        val cityHourly = city?.hourlyForecast.orEmpty()
         when {
             activeHourlyDay != null && activeHourlyDay.hourlyItemsForDay.size == 24 -> {
                 activeHourlyDay.hourlyItemsForDay
             }
-            city.hourlyForecast.size == 24 -> {
-                city.hourlyForecast
+            cityHourly.size == 24 -> {
+                cityHourly
             }
             activeHourlyDay != null -> {
                 SampleWeatherRepository.generate24HoursForDay(
@@ -105,7 +108,7 @@ fun WeatherHomeScreen(
                     isToday = activeHourlyDay.dayName.equals("Today", ignoreCase = true)
                 )
             }
-            else -> city.hourlyForecast
+            else -> cityHourly
         }
     }
 
@@ -129,10 +132,11 @@ fun WeatherHomeScreen(
             // 1. Top Header Bar with App Name, Logo, GPS Button, City Selector & Refresh Button
             item {
                 HomeTopAppBar(
-                    cityName = city.cityName,
-                    isLiveData = city.isLiveData,
-                    isCachedOfflineData = city.isCachedOfflineData,
-                    cachedTimestampLabel = city.cachedTimestampLabel,
+                    cityName = city?.cityName ?: "Select City",
+                    hasActiveCity = city != null,
+                    isLiveData = city?.isLiveData == true,
+                    isCachedOfflineData = city?.isCachedOfflineData == true,
+                    cachedTimestampLabel = city?.cachedTimestampLabel,
                     lastUpdatedTime = uiState.lastUpdatedTime,
                     isRefreshing = uiState.isRefreshing,
                     animationsEnabled = animationsEnabled,
@@ -147,8 +151,8 @@ fun WeatherHomeScreen(
             item {
                 LiveSyncAndGpsStatusSection(
                     syncState = uiState.syncState,
-                    isCachedOfflineData = city.isCachedOfflineData,
-                    cachedTimestampLabel = city.cachedTimestampLabel,
+                    isCachedOfflineData = city?.isCachedOfflineData == true,
+                    cachedTimestampLabel = city?.cachedTimestampLabel,
                     gpsStatus = uiState.gpsStatus,
                     onRetry = onRefresh,
                     onRequestGps = onRequestGpsWeather,
@@ -176,60 +180,69 @@ fun WeatherHomeScreen(
                 )
             }
 
-            // 4. Hero Weather Display (City, Location Icon, Date/Time, Large Temp, Condition, Feels-Like, H/L)
-            item {
-                HeroCurrentWeatherSection(
-                    city = city,
-                    effectiveCondition = effectiveCondition,
-                    temperatureUnit = unit,
-                    animationsEnabled = animationsEnabled,
-                    lastUpdatedTime = uiState.lastUpdatedTime,
-                    onCityTap = onOpenCities
-                )
-            }
+            if (city == null) {
+                item {
+                    NoCitySelectedGlassCard(
+                        onRequestGps = onRequestGpsWeather,
+                        onOpenCities = onOpenCities
+                    )
+                }
+            } else {
+                // 4. Hero Weather Display (City, Location Icon, Date/Time, Large Temp, Condition, Feels-Like, H/L)
+                item {
+                    HeroCurrentWeatherSection(
+                        city = city,
+                        effectiveCondition = effectiveCondition,
+                        temperatureUnit = unit,
+                        animationsEnabled = animationsEnabled,
+                        lastUpdatedTime = uiState.lastUpdatedTime,
+                        onCityTap = onOpenCities
+                    )
+                }
 
-            // 5. Full-Day 24-Hour Horizontal Hourly Forecast Strip (12 AM to 11 PM) + Clickable Detail Panel
-            item {
-                HourlyForecastStrip(
-                    hourlyItems = fullDay24Hours,
-                    temperatureUnit = unit,
-                    animationsEnabled = animationsEnabled,
-                    title = if (activeHourlyDay != null) {
-                        "${activeHourlyDay.dayName} (${activeHourlyDay.dateShort}) • Hourly Forecast"
-                    } else {
-                        stringResource(R.string.hourly_forecast_title)
-                    },
-                    subtitleBadge = "12 AM – 11 PM • ${fullDay24Hours.size} Hours",
-                    timeZoneLabel = city.timeZoneOffsetLabel,
-                    selectedDayLabel = activeHourlyDay?.let { "${it.dayName}, ${it.dateShort}" },
-                    tenDays = city.tenDayForecast,
-                    selectedDayId = activeHourlyDay?.id,
-                    onSelectDay = { clickedDay ->
-                        selectedHourlyDayId = clickedDay.id
-                    }
-                )
-            }
+                // 5. Full-Day 24-Hour Horizontal Hourly Forecast Strip (12 AM to 11 PM) + Clickable Detail Panel
+                item {
+                    HourlyForecastStrip(
+                        hourlyItems = fullDay24Hours,
+                        temperatureUnit = unit,
+                        animationsEnabled = animationsEnabled,
+                        title = if (activeHourlyDay != null) {
+                            "${activeHourlyDay.dayName} (${activeHourlyDay.dateShort}) • Hourly Forecast"
+                        } else {
+                            stringResource(R.string.hourly_forecast_title)
+                        },
+                        subtitleBadge = "12 AM – 11 PM • ${fullDay24Hours.size} Hours",
+                        timeZoneLabel = city.timeZoneOffsetLabel,
+                        selectedDayLabel = activeHourlyDay?.let { "${it.dayName}, ${it.dateShort}" },
+                        tenDays = city.tenDayForecast,
+                        selectedDayId = activeHourlyDay?.id,
+                        onSelectDay = { clickedDay ->
+                            selectedHourlyDayId = clickedDay.id
+                        }
+                    )
+                }
 
-            // 6. 10-Day Forecast Preview Card with button to open full 10-Day screen or clicked day's hourly detail
-            item {
-                HomeTenDayForecastPreviewCard(
-                    tenDays = city.tenDayForecast,
-                    currentTempCelsius = city.currentTempCelsius,
-                    temperatureUnit = unit,
-                    animationsEnabled = animationsEnabled,
-                    onOpenFullForecast = onOpenFullForecast,
-                    onSelectDayDetail = { selectedDay ->
-                        onSelectDayDetail(selectedDay)
-                    }
-                )
-            }
+                // 6. 10-Day Forecast Preview Card with button to open full 10-Day screen or clicked day's hourly detail
+                item {
+                    HomeTenDayForecastPreviewCard(
+                        tenDays = city.tenDayForecast,
+                        currentTempCelsius = city.currentTempCelsius,
+                        temperatureUnit = unit,
+                        animationsEnabled = animationsEnabled,
+                        onOpenFullForecast = onOpenFullForecast,
+                        onSelectDayDetail = { selectedDay ->
+                            onSelectDayDetail(selectedDay)
+                        }
+                    )
+                }
 
-            // 7. All 7 Individual Atmospheric Weather Information Glass Cards
-            item {
-                WeatherInformationCardsSection(
-                    details = city.details,
-                    temperatureUnit = unit
-                )
+                // 7. All 7 Individual Atmospheric Weather Information Glass Cards
+                item {
+                    WeatherInformationCardsSection(
+                        details = city.details,
+                        temperatureUnit = unit
+                    )
+                }
             }
         }
     }
@@ -238,6 +251,7 @@ fun WeatherHomeScreen(
 @Composable
 private fun HomeTopAppBar(
     cityName: String,
+    hasActiveCity: Boolean,
     isLiveData: Boolean,
     isCachedOfflineData: Boolean,
     cachedTimestampLabel: String?,
@@ -318,7 +332,8 @@ private fun HomeTopAppBar(
                         modifier = Modifier.size(13.dp)
                     )
                     val statusText = when {
-                        isLiveData && lastUpdatedTime != null -> "Live API • $lastUpdatedTime"
+                        !hasActiveCity -> "Choose GPS or search a city"
+                        isLiveData && lastUpdatedTime != null -> "Live • $lastUpdatedTime"
                         isLiveData -> stringResource(R.string.live_api_badge)
                         isCachedOfflineData && cachedTimestampLabel != null -> "Offline Cache • $cachedTimestampLabel"
                         isCachedOfflineData -> stringResource(R.string.cached_offline_badge)
@@ -327,7 +342,9 @@ private fun HomeTopAppBar(
                     Text(
                         text = statusText,
                         style = MaterialTheme.typography.labelMedium,
-                        color = palette.secondaryText
+                        color = palette.secondaryText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -341,6 +358,7 @@ private fun HomeTopAppBar(
             Row(
                 modifier = Modifier
                     .minimumInteractiveComponentSize()
+                    .widthIn(max = 136.dp)
                     .clip(CircleShape)
                     .background(palette.pillBackground)
                     .border(1.dp, palette.cardBorderLight, CircleShape)
@@ -359,7 +377,9 @@ private fun HomeTopAppBar(
                 Text(
                     text = cityName,
                     style = MaterialTheme.typography.labelLarge,
-                    color = palette.primaryText
+                    color = palette.primaryText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
@@ -775,13 +795,13 @@ private fun ConditionPreviewPillStrip(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Realistic Weather Scene Engine (${activeScene.displayName}):",
+                text = "Sky Preview • ${activeScene.displayName}",
                 style = MaterialTheme.typography.labelMedium,
                 color = palette.secondaryText
             )
             if (hasOverride) {
                 Text(
-                    text = "Reset to Live API Sky",
+                    text = "Reset to Live Sky",
                     style = MaterialTheme.typography.labelMedium,
                     color = palette.accentCyan,
                     modifier = Modifier
@@ -989,13 +1009,123 @@ private fun HeroCurrentWeatherSection(
             if (lastUpdatedTime != null) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = "Last updated at $lastUpdatedTime • Coordinates ${
-                        String.format("%.2f°, %.2f°", city.latitude, city.longitude)
+                    text = "Last updated at $lastUpdatedTime • ${
+                        String.format(Locale.US, "%.2f°, %.2f°", city.latitude, city.longitude)
                     }",
                     style = MaterialTheme.typography.labelMedium,
                     color = palette.mutedText,
                     textAlign = TextAlign.Center
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NoCitySelectedGlassCard(
+    onRequestGps: () -> Unit,
+    onOpenCities: () -> Unit
+) {
+    val palette = LocalGlassPalette.current
+
+    GlassmorphicCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("no_city_selected_card"),
+        shape = RoundedCornerShape(30.dp),
+        contentPadding = PaddingValues(horizontal = 22.dp, vertical = 28.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(palette.accentCyan.copy(alpha = 0.20f))
+                    .border(1.dp, palette.accentCyan, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.LocationOn,
+                    contentDescription = "Choose Your Location",
+                    tint = palette.accentCyan,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            Text(
+                text = "Choose Your Location",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = palette.primaryText,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = "Detect live weather using your GPS location or search and add any city worldwide.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = palette.secondaryText,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(palette.accentCyan.copy(alpha = 0.24f))
+                        .border(1.dp, palette.accentCyan, CircleShape)
+                        .clickable(onClick = onRequestGps)
+                        .padding(horizontal = 16.dp, vertical = 11.dp)
+                        .testTag("empty_home_use_gps_button"),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.MyLocation,
+                        contentDescription = null,
+                        tint = palette.accentCyan,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = "Use My GPS",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = palette.accentCyan
+                    )
+                }
+
+                Row(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(palette.pillBackground)
+                        .border(1.dp, palette.cardBorderLight, CircleShape)
+                        .clickable(onClick = onOpenCities)
+                        .padding(horizontal = 16.dp, vertical = 11.dp)
+                        .testTag("empty_home_open_cities_button"),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Search,
+                        contentDescription = null,
+                        tint = palette.primaryText,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = "Search / Add City",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = palette.primaryText
+                    )
+                }
             }
         }
     }

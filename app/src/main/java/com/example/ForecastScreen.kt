@@ -30,7 +30,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,6 +50,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 /**
@@ -61,9 +65,109 @@ fun ForecastScreen(
     onCloseDayDetail: () -> Unit,
     onRefresh: () -> Unit,
     onBackToHome: () -> Unit,
+    onOpenCities: () -> Unit = {},
+    onRequestGps: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val city = uiState.activeCity
+    if (city == null) {
+        BackHandler(onBack = onBackToHome)
+        val palette = LocalGlassPalette.current
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(horizontal = 18.dp, vertical = 24.dp),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            GlassmorphicCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 640.dp)
+                    .testTag("forecast_no_city_card"),
+                shape = RoundedCornerShape(28.dp),
+                contentPadding = PaddingValues(24.dp)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.LocationOn,
+                        contentDescription = null,
+                        tint = palette.accentCyan,
+                        modifier = Modifier.size(36.dp)
+                    )
+                    Text(
+                        text = "No Location Selected",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = palette.primaryText,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "Select a city or detect your GPS location to view the 10-day and 24-hour forecast.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = palette.secondaryText,
+                        textAlign = TextAlign.Center
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(palette.accentCyan.copy(alpha = 0.24f))
+                                .border(1.dp, palette.accentCyan, CircleShape)
+                                .clickable(onClick = onRequestGps)
+                                .padding(horizontal = 16.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.MyLocation,
+                                contentDescription = null,
+                                tint = palette.accentCyan,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = "Use My GPS",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = palette.accentCyan
+                            )
+                        }
+                        Row(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(palette.pillBackground)
+                                .border(1.dp, palette.cardBorderLight, CircleShape)
+                                .clickable(onClick = onOpenCities)
+                                .padding(horizontal = 16.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Search,
+                                contentDescription = null,
+                                tint = palette.primaryText,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = "Cities & Search",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = palette.primaryText
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        return
+    }
+
     val unit = uiState.settings.temperatureUnit
     val animationsEnabled = uiState.settings.animationsEnabled
     val tenDays = city.tenDayForecast

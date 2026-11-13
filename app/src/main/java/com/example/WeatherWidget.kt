@@ -132,27 +132,27 @@ object WeatherWidgetUpdater {
         appWidgetId: Int
     ) {
         val prefs = context.getSharedPreferences(PREF_WIDGET_STATE, Context.MODE_PRIVATE)
-        val cityName = prefs.getString(KEY_CITY_NAME, "San Francisco") ?: "San Francisco"
-        val tempText = prefs.getString(KEY_TEMP_TEXT, "21°C") ?: "21°C"
-        val conditionText = prefs.getString(KEY_CONDITION_TEXT, "☀️ Partly Cloudy") ?: "☀️ Partly Cloudy"
-        val highLowText = prefs.getString(KEY_HIGH_LOW_TEXT, "High: 23°C • Low: 13°C") ?: "High: 23°C • Low: 13°C"
-        val updatedText = prefs.getString(KEY_UPDATED_TEXT, "Live Open-Meteo") ?: "Live Open-Meteo"
+        val cityName = prefs.getString(KEY_CITY_NAME, "Select City") ?: "Select City"
+        val tempText = prefs.getString(KEY_TEMP_TEXT, "--") ?: "--"
+        val conditionText = prefs.getString(KEY_CONDITION_TEXT, "Tap to choose location") ?: "Tap to choose location"
+        val highLowText = prefs.getString(KEY_HIGH_LOW_TEXT, "Open app to sync weather") ?: "Open app to sync weather"
+        val updatedText = prefs.getString(KEY_UPDATED_TEXT, "Open-Meteo") ?: "Open-Meteo"
 
-        val h1Time = prefs.getString(KEY_H1_TIME, "Now") ?: "Now"
-        val h1Icon = prefs.getString(KEY_H1_ICON, "⛅") ?: "⛅"
-        val h1Temp = prefs.getString(KEY_H1_TEMP, "21°") ?: "21°"
+        val h1Time = prefs.getString(KEY_H1_TIME, "+1h") ?: "+1h"
+        val h1Icon = prefs.getString(KEY_H1_ICON, "☁️") ?: "☁️"
+        val h1Temp = prefs.getString(KEY_H1_TEMP, "--") ?: "--"
 
-        val h2Time = prefs.getString(KEY_H2_TIME, "+1h") ?: "+1h"
-        val h2Icon = prefs.getString(KEY_H2_ICON, "☀️") ?: "☀️"
-        val h2Temp = prefs.getString(KEY_H2_TEMP, "22°") ?: "22°"
+        val h2Time = prefs.getString(KEY_H2_TIME, "+2h") ?: "+2h"
+        val h2Icon = prefs.getString(KEY_H2_ICON, "☁️") ?: "☁️"
+        val h2Temp = prefs.getString(KEY_H2_TEMP, "--") ?: "--"
 
-        val h3Time = prefs.getString(KEY_H3_TIME, "+2h") ?: "+2h"
-        val h3Icon = prefs.getString(KEY_H3_ICON, "⛅") ?: "⛅"
-        val h3Temp = prefs.getString(KEY_H3_TEMP, "23°") ?: "23°"
+        val h3Time = prefs.getString(KEY_H3_TIME, "+3h") ?: "+3h"
+        val h3Icon = prefs.getString(KEY_H3_ICON, "☁️") ?: "☁️"
+        val h3Temp = prefs.getString(KEY_H3_TEMP, "--") ?: "--"
 
-        val h4Time = prefs.getString(KEY_H4_TIME, "+3h") ?: "+3h"
-        val h4Icon = prefs.getString(KEY_H4_ICON, "🌧️") ?: "🌧️"
-        val h4Temp = prefs.getString(KEY_H4_TEMP, "20°") ?: "20°"
+        val h4Time = prefs.getString(KEY_H4_TIME, "+4h") ?: "+4h"
+        val h4Icon = prefs.getString(KEY_H4_ICON, "☁️") ?: "☁️"
+        val h4Temp = prefs.getString(KEY_H4_TEMP, "--") ?: "--"
 
         val views = RemoteViews(context.packageName, R.layout.weather_widget_layout).apply {
             setTextViewText(R.id.widget_city_name, cityName)

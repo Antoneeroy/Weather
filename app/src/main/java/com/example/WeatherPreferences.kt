@@ -146,11 +146,10 @@ class WeatherPreferences(private val context: Context) {
         val notifyTime = runCatching { NotificationTimeOption.valueOf(notifyTimeName) }
             .getOrDefault(NotificationTimeOption.TIME_08_00)
 
+        val defaultCityId = prefs[KEY_DEFAULT_CITY_ID] ?: ""
         val refreshIntervalName = prefs[KEY_REFRESH_INTERVAL] ?: RefreshIntervalOption.EVERY_1_HOUR.name
         val refreshInterval = runCatching { RefreshIntervalOption.valueOf(refreshIntervalName) }
             .getOrDefault(RefreshIntervalOption.EVERY_1_HOUR)
-
-        val defaultCityId = prefs[KEY_DEFAULT_CITY_ID] ?: "sf_us"
 
         WeatherAppSettings(
             themeMode = themeMode,
@@ -166,17 +165,17 @@ class WeatherPreferences(private val context: Context) {
             severeWeatherNotification = severeAlert,
             temperatureChangeNotification = tempChange,
             notificationTime = notifyTime,
-            refreshInterval = refreshInterval,
-            defaultCityId = defaultCityId
+            defaultCityId = defaultCityId,
+            refreshInterval = refreshInterval
         )
     }
 
     val favoriteCityIdsFlow: Flow<Set<String>> = context.weatherDataStore.data.map { prefs ->
-        prefs[KEY_FAVORITE_CITY_IDS] ?: setOf("sf_us")
+        prefs[KEY_FAVORITE_CITY_IDS] ?: emptySet()
     }
 
     val selectedCityIdFlow: Flow<String?> = context.weatherDataStore.data.map { prefs ->
-        prefs[KEY_SELECTED_CITY_ID] ?: prefs[KEY_DEFAULT_CITY_ID]
+        prefs[KEY_SELECTED_CITY_ID] ?: prefs[KEY_DEFAULT_CITY_ID]?.takeIf { it.isNotBlank() }
     }
 
     suspend fun saveSettings(settings: WeatherAppSettings) {
@@ -194,14 +193,18 @@ class WeatherPreferences(private val context: Context) {
             prefs[KEY_NOTIFY_SEVERE] = settings.severeWeatherNotification
             prefs[KEY_NOTIFY_TEMP_CHANGE] = settings.temperatureChangeNotification
             prefs[KEY_NOTIFICATION_TIME] = settings.notificationTime.name
-            prefs[KEY_REFRESH_INTERVAL] = settings.refreshInterval.name
             prefs[KEY_DEFAULT_CITY_ID] = settings.defaultCityId
+            prefs[KEY_REFRESH_INTERVAL] = settings.refreshInterval.name
         }
     }
 
-    suspend fun saveSelectedCityId(cityId: String) {
+    suspend fun saveSelectedCityId(cityId: String?) {
         context.weatherDataStore.edit { prefs ->
-            prefs[KEY_SELECTED_CITY_ID] = cityId
+            if (cityId.isNullOrBlank()) {
+                prefs.remove(KEY_SELECTED_CITY_ID)
+            } else {
+                prefs[KEY_SELECTED_CITY_ID] = cityId
+            }
         }
     }
 

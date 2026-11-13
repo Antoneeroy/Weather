@@ -9,6 +9,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -34,6 +35,11 @@ class WeatherViewModel(
     private var searchDebounceJob: Job? = null
 
     companion object {
+        private val INITIAL_FIVE_CITY_IDS = setOf(
+            "sf_us", "tokyo_jp", "london_uk", "dubai_ae", "zermatt_ch",
+            "nyc_us", "singapore_sg", "paris_fr"
+        )
+
         fun provideFactory(context: Context): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
@@ -53,54 +59,77 @@ class WeatherViewModel(
     init {
         weatherPreferences?.let { prefs ->
             viewModelScope.launch {
-                // Restore cached city snapshots & custom saved cities
                 val cachedMap = prefs.getAllCachedSnapshots()
                 val savedRecords = prefs.loadSavedCitiesRecords()
-                if (cachedMap.isNotEmpty() || savedRecords.isNotEmpty()) {
-                    _uiState.update { current ->
-                        val baseCities = current.cities.map { city ->
-                            cachedMap[city.id]?.weatherData ?: city
-                        }.toMutableList()
+                    .filterNot { it.id in INITIAL_FIVE_CITY_IDS }
+                val favIds = (prefs.favoriteCityIdsFlow.firstOrNull() ?: emptySet())
+                    .filterNot { it in INITIAL_FIVE_CITY_IDS }
+                    .toSet()
+                val rawSettings = prefs.settingsFlow.firstOrNull() ?: WeatherAppSettings()
+                val loadedSettings = if (rawSettings.defaultCityId in INITIAL_FIVE_CITY_IDS) {
+                    rawSettings.copy(defaultCityId = "")
+                } else {
+                    rawSettings
+                }
+                val savedSelectedId = prefs.selectedCityIdFlow.firstOrNull()
+                    ?.takeIf { it !in INITIAL_FIVE_CITY_IDS }
+                    ?: loadedSettings.defaultCityId.takeIf { it.isNotBlank() }
 
-                        savedRecords.forEach { rec ->
-                            if (baseCities.none { it.id == rec.id }) {
-                                val cachedCity = cachedMap[rec.id]?.weatherData
-                                if (cachedCity != null) {
-                                    baseCities.add(cachedCity)
-                                } else {
-                                    val template = current.cities.first()
-                                    baseCities.add(
-                                        template.copy(
-                                            id = rec.id,
-                                            cityName = rec.cityName,
-                                            regionAndCountry = rec.regionAndCountry,
-                                            latitude = rec.latitude,
-                                            longitude = rec.longitude,
-                                            isFavorite = rec.isFavorite,
-                                            isLiveData = false
-                                        )
-                                    )
-                                }
-                            }
+                val restoredCities = savedRecords.map { rec ->
+                    cachedMap[rec.id]?.weatherData?.copy(isFavorite = favIds.contains(rec.id))
+                        ?: createMinimalCityFromRecord(rec, favIds.contains(rec.id))
+                }
+
+                val resolvedSelectedId = savedSelectedId?.takeIf { id ->
+                    restoredCities.any { it.id == id }
+                } ?: restoredCities.firstOrNull()?.id
+
+                _uiState.update { current ->
+                    val target = restoredCities.find { it.id == resolvedSelectedId } ?: restoredCities.firstOrNull()
+                    current.copy(
+                        cities = restoredCities,
+                        selectedCityId = resolvedSelectedId,
+                        favoriteCityIds = favIds,
+                        settings = loadedSettings,
+                        selectedDayForDetail = target?.tenDayForecast?.firstOrNull()
+                    )
+                }
+
+                if (autoFetchOnInit) {
+                    if (locationManager?.hasLocationPermission() == true) {
+                        detectGpsLocationAndFetchWeather()
+                    } else if (_uiState.value.activeCity != null) {
+                        refreshActiveCityWeather()
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                isRefreshing = false,
+                                syncState = WeatherDataSyncState.Success("Ready")
+                            )
                         }
-                        current.copy(cities = baseCities)
                     }
                 }
             }
 
             viewModelScope.launch {
                 prefs.settingsFlow.collect { loadedSettings ->
+                    val sanitized = if (loadedSettings.defaultCityId in INITIAL_FIVE_CITY_IDS) {
+                        loadedSettings.copy(defaultCityId = "")
+                    } else {
+                        loadedSettings
+                    }
                     _uiState.update { current ->
-                        current.copy(settings = loadedSettings)
+                        current.copy(settings = sanitized)
                     }
                     appContext?.let { ctx ->
-                        WeatherNotificationHelper.scheduleOrUpdateBackgroundWork(ctx, loadedSettings)
+                        WeatherNotificationHelper.scheduleOrUpdateBackgroundWork(ctx, sanitized)
                     }
                 }
             }
 
             viewModelScope.launch {
-                prefs.favoriteCityIdsFlow.collect { favIds ->
+                prefs.favoriteCityIdsFlow.collect { rawFavIds ->
+                    val favIds = rawFavIds.filterNot { it in INITIAL_FIVE_CITY_IDS }.toSet()
                     _uiState.update { current ->
                         current.copy(
                             favoriteCityIds = favIds,
@@ -111,35 +140,82 @@ class WeatherViewModel(
                     }
                 }
             }
-
-            viewModelScope.launch {
-                prefs.selectedCityIdFlow.collect { savedCityId ->
-                    if (!savedCityId.isNullOrBlank()) {
-                        _uiState.update { current ->
-                            if (current.cities.any { it.id == savedCityId }) {
-                                current.copy(selectedCityId = savedCityId)
-                            } else {
-                                current
-                            }
+        } ?: run {
+            if (autoFetchOnInit) {
+                viewModelScope.launch {
+                    if (locationManager?.hasLocationPermission() == true) {
+                        detectGpsLocationAndFetchWeather()
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                isRefreshing = false,
+                                syncState = WeatherDataSyncState.Success("Ready")
+                            )
                         }
                     }
                 }
             }
         }
+    }
 
-        if (autoFetchOnInit) {
-            viewModelScope.launch {
-                if (locationManager?.hasLocationPermission() == true) {
-                    detectGpsLocationAndFetchWeather()
-                } else {
-                    refreshActiveCityWeather()
-                }
-            }
-        }
+    private fun createMinimalCityFromRecord(rec: SavedCityRecord, isFavorite: Boolean): CityWeatherData {
+        return CityWeatherData(
+            id = rec.id,
+            cityName = rec.cityName,
+            regionAndCountry = rec.regionAndCountry,
+            latitude = rec.latitude,
+            longitude = rec.longitude,
+            timeZoneOffsetLabel = "UTC",
+            currentTimeDisplay = "Syncing…",
+            currentDateDisplay = SampleWeatherRepository.getCurrentDateFormatted(),
+            currentTempCelsius = 0,
+            feelsLikeCelsius = 0,
+            highTempCelsius = 0,
+            lowTempCelsius = 0,
+            condition = WeatherConditionType.PARTLY_CLOUDY,
+            wmoCode = 2,
+            conditionDescription = "Syncing live forecast…",
+            airQualityIndex = 0,
+            airQualityLabel = "Open-Meteo",
+            details = AtmosphericDetails(
+                humidityPercent = 0,
+                dewPointCelsius = 0,
+                windSpeedKmh = 0,
+                windDirection = "--",
+                windGustKmh = 0,
+                pressureHpa = 1013,
+                pressureTrend = "Syncing",
+                visibilityKm = 10.0,
+                visibilityStatus = "Syncing",
+                uvIndex = 0,
+                uvCategory = "Low",
+                sunriseTime = "--:--",
+                sunsetTime = "--:--",
+                daylightDuration = "--"
+            ),
+            hourlyForecast = emptyList(),
+            tenDayForecast = emptyList(),
+            isCurrentLocation = rec.id == "gps_current_location",
+            isLiveData = false,
+            isFavorite = isFavorite
+        )
     }
 
     fun refreshActiveCityWeather() {
         val currentCity = _uiState.value.activeCity
+        if (currentCity == null) {
+            if (locationManager?.hasLocationPermission() == true) {
+                detectGpsLocationAndFetchWeather()
+            } else {
+                _uiState.update {
+                    it.copy(
+                        isRefreshing = false,
+                        syncState = WeatherDataSyncState.Success("Ready")
+                    )
+                }
+            }
+            return
+        }
         fetchLiveWeatherForCity(
             id = currentCity.id,
             cityName = currentCity.cityName,
@@ -414,10 +490,6 @@ class WeatherViewModel(
         }
     }
 
-    fun setDefaultCity(cityId: String) {
-        updateSettings { it.copy(defaultCityId = cityId) }
-    }
-
     fun updateSearchQuery(query: String) {
         _uiState.update {
             it.copy(
@@ -529,16 +601,23 @@ class WeatherViewModel(
         )
     }
 
-    fun addDiscoverableCity(city: CityWeatherData) {
-        _uiState.update { state ->
-            if (state.cities.any { it.id == city.id }) {
-                state.copy(selectedCityId = city.id)
-            } else {
+    fun addSavedCity(city: CityWeatherData) {
+        val exists = _uiState.value.cities.any { it.id == city.id }
+        if (!exists) {
+            _uiState.update { state ->
                 state.copy(
                     cities = state.cities + city,
-                    selectedCityId = city.id
+                    selectedCityId = city.id,
+                    selectedDayForDetail = city.tenDayForecast.firstOrNull(),
+                    isShowingDayDetailScreen = false
                 )
             }
+            viewModelScope.launch {
+                weatherPreferences?.saveSelectedCityId(city.id)
+                weatherPreferences?.saveCustomCitiesList(_uiState.value.cities, _uiState.value.favoriteCityIds)
+            }
+        } else {
+            selectCity(city.id)
         }
         fetchLiveWeatherForCity(
             id = city.id,
@@ -551,15 +630,54 @@ class WeatherViewModel(
         )
     }
 
+    fun setDefaultCity(cityId: String) {
+        updateSettings { it.copy(defaultCityId = cityId) }
+        if (_uiState.value.cities.any { it.id == cityId }) {
+            selectCity(cityId)
+        }
+    }
+
     fun removeCity(cityId: String) {
         _uiState.update { state ->
-            if (state.cities.size <= 1) return@update state
             val remaining = state.cities.filterNot { it.id == cityId }
-            val nextSelected = if (state.selectedCityId == cityId) remaining.first().id else state.selectedCityId
-            state.copy(cities = remaining, selectedCityId = nextSelected)
+            val nextSelected = if (state.selectedCityId == cityId) {
+                remaining.firstOrNull()?.id
+            } else {
+                state.selectedCityId
+            }
+            val nextDetailDay = remaining.find { it.id == nextSelected }?.tenDayForecast?.firstOrNull()
+            state.copy(
+                cities = remaining,
+                selectedCityId = nextSelected,
+                favoriteCityIds = state.favoriteCityIds - cityId,
+                selectedDayForDetail = nextDetailDay,
+                isShowingDayDetailScreen = false
+            )
         }
         viewModelScope.launch {
+            weatherPreferences?.saveSelectedCityId(_uiState.value.selectedCityId)
+            weatherPreferences?.saveFavoriteCityIds(_uiState.value.favoriteCityIds)
             weatherPreferences?.saveCustomCitiesList(_uiState.value.cities, _uiState.value.favoriteCityIds)
+        }
+    }
+
+    fun clearAllSavedCities() {
+        _uiState.update { state ->
+            state.copy(
+                cities = emptyList(),
+                selectedCityId = null,
+                favoriteCityIds = emptySet(),
+                selectedDayForDetail = null,
+                isShowingDayDetailScreen = false
+            )
+        }
+        if (_uiState.value.settings.defaultCityId.isNotBlank()) {
+            updateSettings { it.copy(defaultCityId = "") }
+        }
+        viewModelScope.launch {
+            weatherPreferences?.saveSelectedCityId(null)
+            weatherPreferences?.saveFavoriteCityIds(emptySet())
+            weatherPreferences?.saveCustomCitiesList(emptyList(), emptySet())
         }
     }
 
@@ -606,10 +724,11 @@ class WeatherViewModel(
 
     fun setTemperatureUnit(unit: TemperatureUnit) {
         updateSettings { it.copy(temperatureUnit = unit) }
+        val active = _uiState.value.activeCity ?: return
         appContext?.let { ctx ->
             WeatherWidgetUpdater.updateAllWidgets(
                 context = ctx,
-                city = _uiState.value.activeCity,
+                city = active,
                 temperatureUnit = unit,
                 lastUpdatedLabel = _uiState.value.lastUpdatedTime
             )
@@ -662,16 +781,23 @@ class WeatherViewModel(
 
     fun dispatchTestWeatherNotification(): Boolean {
         val ctx = appContext ?: return false
+        val active = _uiState.value.activeCity
+        if (active == null) {
+            _uiState.update {
+                it.copy(notificationStatusMessage = "Add or detect a city first to send a weather notification.")
+            }
+            return false
+        }
         val posted = WeatherNotificationHelper.evaluateAndSendNotifications(
             context = ctx,
-            city = _uiState.value.activeCity,
+            city = active,
             settings = _uiState.value.settings,
             forceSendSummary = true
         )
         _uiState.update {
             it.copy(
                 notificationStatusMessage = if (posted) {
-                    "Live weather notification sent for ${_uiState.value.activeCity.cityName}."
+                    "Live weather notification sent for ${active.cityName}."
                 } else {
                     "Grant notification permission to receive weather notifications."
                 }
@@ -682,19 +808,27 @@ class WeatherViewModel(
 
     fun pinOrSyncHomeScreenWidget() {
         val ctx = appContext ?: return
-        WeatherWidgetUpdater.updateAllWidgets(
-            context = ctx,
-            city = _uiState.value.activeCity,
-            temperatureUnit = _uiState.value.settings.temperatureUnit,
-            lastUpdatedLabel = _uiState.value.lastUpdatedTime
-        )
+        val active = _uiState.value.activeCity
+        if (active != null) {
+            WeatherWidgetUpdater.updateAllWidgets(
+                context = ctx,
+                city = active,
+                temperatureUnit = _uiState.value.settings.temperatureUnit,
+                lastUpdatedLabel = _uiState.value.lastUpdatedTime
+            )
+        }
         val pinned = WeatherWidgetUpdater.requestPinWeatherWidget(ctx)
         _uiState.update {
             it.copy(
-                notificationStatusMessage = if (pinned) {
-                    "Widget pin request sent to Android launcher & synced with ${_uiState.value.activeCity.cityName}."
-                } else {
-                    "Widget data synced for ${_uiState.value.activeCity.cityName}. Add the Weather widget from your launcher."
+                notificationStatusMessage = when {
+                    pinned && active != null ->
+                        "Widget pin request sent to Android launcher & synced with ${active.cityName}."
+                    pinned ->
+                        "Widget pin request sent to Android launcher."
+                    active != null ->
+                        "Widget data synced for ${active.cityName}. Add the Weather widget from your launcher."
+                    else ->
+                        "Add the Weather widget from your launcher, then add or detect a city."
                 }
             )
         }

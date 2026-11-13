@@ -1,4 +1,4 @@
-# Keep Open-Meteo & Geocoding DTO models serialized with Moshi
+# Keep Open-Meteo, Geocoding, and persisted cache/preference models serialized with Moshi
 -keepclassmembers class com.example.OpenMeteo* {
     <fields>;
 }
@@ -7,6 +7,14 @@
     <fields>;
 }
 -keep class com.example.Geocoding* { *; }
+-keep class com.example.SavedCityRecord { *; }
+-keep class com.example.CachedCityWeatherSnapshot { *; }
+-keep class com.example.CityWeatherData { *; }
+-keep class com.example.DailyForecastItem { *; }
+-keep class com.example.HourlyForecastItem { *; }
+-keep class com.example.AtmosphericDetails { *; }
+-keep class com.example.WeatherConditionType { *; }
+-keep class com.example.WeatherAppSettings { *; }
 
 # Moshi Kotlin reflection and adapters
 -keep class com.squareup.moshi.** { *; }

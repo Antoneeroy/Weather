@@ -46,6 +46,11 @@ class WeatherRepository(
         longitude: Double,
         isCurrentLocation: Boolean = false
     ): WeatherApiResult<CityWeatherData> = withContext(Dispatchers.IO) {
+        if (!latitude.isFinite() || !longitude.isFinite() ||
+            latitude !in -90.0..90.0 || longitude !in -180.0..180.0
+        ) {
+            return@withContext WeatherApiResult.ApiError("Invalid location coordinates.")
+        }
         if (!isNetworkConnected()) {
             return@withContext WeatherApiResult.NoInternet()
         }
@@ -67,18 +72,21 @@ class WeatherRepository(
             )
             WeatherApiResult.Success(mapped)
         } catch (uhe: UnknownHostException) {
-            WeatherApiResult.NoInternet("Unable to reach Open-Meteo servers. Check your internet connection.")
+            WeatherApiResult.NoInternet("Unable to reach weather servers. Please check your internet connection.")
         } catch (ioe: IOException) {
-            WeatherApiResult.NoInternet("Network error while fetching live weather: ${ioe.localizedMessage ?: "Check connection"}")
-        } catch (e: Exception) {
-            WeatherApiResult.ApiError(e.localizedMessage ?: "Failed to parse live weather data.")
+            WeatherApiResult.NoInternet("Connection interrupted while loading weather. Please try again.")
+        } catch (_: Exception) {
+            WeatherApiResult.ApiError("Unable to load weather right now. Please try again.")
         }
     }
 
     suspend fun searchCities(query: String): WeatherApiResult<List<GeocodingLocationDto>> =
         withContext(Dispatchers.IO) {
-            val trimmed = query.trim()
-            if (trimmed.isEmpty()) {
+            val sanitized = query
+                .replace(Regex("[\\p{Cntrl}]"), "")
+                .trim()
+                .take(80)
+            if (sanitized.isEmpty()) {
                 return@withContext WeatherApiResult.Success(emptyList())
             }
             if (!isNetworkConnected()) {
@@ -86,15 +94,15 @@ class WeatherRepository(
             }
 
             try {
-                val response = geocodingService.searchLocations(name = trimmed, count = 10)
+                val response = geocodingService.searchLocations(name = sanitized, count = 10)
                 val results = response.results.orEmpty()
                 WeatherApiResult.Success(results)
             } catch (uhe: UnknownHostException) {
                 WeatherApiResult.NoInternet("Unable to search cities offline. Check your internet connection.")
             } catch (ioe: IOException) {
-                WeatherApiResult.NoInternet("Network timeout while searching cities.")
-            } catch (e: Exception) {
-                WeatherApiResult.ApiError(e.localizedMessage ?: "City search error occurred.")
+                WeatherApiResult.NoInternet("Connection timed out while searching cities.")
+            } catch (_: Exception) {
+                WeatherApiResult.ApiError("Unable to search cities right now. Please try again.")
             }
         }
 

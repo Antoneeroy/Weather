@@ -19,7 +19,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -92,7 +95,7 @@ fun WeatherAppRoot(
 ) {
     val context = LocalContext.current
     var currentDestination by rememberSaveable { mutableStateOf(WeatherDestination.HOME) }
-    var hasRequestedInitialPermission by rememberSaveable { mutableStateOf(false) }
+    var showLocationDisclosureDialog by rememberSaveable { mutableStateOf(false) }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -139,38 +142,51 @@ fun WeatherAppRoot(
         if (hasPerm) {
             viewModel.detectGpsLocationAndFetchWeather()
         } else {
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                )
-            )
+            showLocationDisclosureDialog = true
         }
     }
 
-    // Request foreground location permission once on initial app launch
     LaunchedEffect(Unit) {
         WeatherNotificationHelper.ensureNotificationChannels(context)
-        if (!hasRequestedInitialPermission) {
-            hasRequestedInitialPermission = true
-            val hasPerm = ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
+    }
 
-            if (!hasPerm) {
-                locationPermissionLauncher.launch(
-                    arrayOf(
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    )
+    if (showLocationDisclosureDialog) {
+        AlertDialog(
+            onDismissRequest = { showLocationDisclosureDialog = false },
+            title = { Text("Local Weather Access") },
+            text = {
+                Text(
+                    "Allow Weather to access your device location to show live local forecasts. " +
+                        "Your location is used strictly on-device to fetch weather and is never stored on private servers or shared. " +
+                        "You can also search any city manually without granting GPS access."
                 )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLocationDisclosureDialog = false
+                        locationPermissionLauncher.launch(
+                            arrayOf(
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                                Manifest.permission.ACCESS_FINE_LOCATION
+                            )
+                        )
+                    }
+                ) {
+                    Text("Allow Location")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showLocationDisclosureDialog = false
+                        currentDestination = WeatherDestination.CITIES
+                    }
+                ) {
+                    Text("Search City Instead")
+                }
             }
-        }
+        )
     }
 
     WeatherTheme(darkTheme = effectiveDarkTheme) {
@@ -239,7 +255,11 @@ fun WeatherAppRoot(
                                     onRefresh = viewModel::triggerRefresh,
                                     onBackToHome = {
                                         currentDestination = WeatherDestination.HOME
-                                    }
+                                    },
+                                    onOpenCities = {
+                                        currentDestination = WeatherDestination.CITIES
+                                    },
+                                    onRequestGps = requestOrDetectGpsLocation
                                 )
                             }
 
@@ -258,13 +278,13 @@ fun WeatherAppRoot(
                                         )
                                     },
                                     onRequestGpsLocation = requestOrDetectGpsLocation,
-                                    onAddCity = viewModel::addDiscoverableCity,
                                     onRemoveCity = viewModel::removeCity,
                                     onNavigateHome = {
                                         currentDestination = WeatherDestination.HOME
                                     },
                                     onToggleFavoriteCity = viewModel::toggleFavoriteCity,
-                                    onSetDefaultCity = viewModel::setDefaultCity
+                                    onSetDefaultCity = viewModel::setDefaultCity,
+                                    onClearAllSavedCities = viewModel::clearAllSavedCities
                                 )
                             }
 

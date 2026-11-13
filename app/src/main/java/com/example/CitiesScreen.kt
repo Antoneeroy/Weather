@@ -24,11 +24,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Public
@@ -63,11 +61,11 @@ fun CitiesScreen(
     onExecuteCitySearch: () -> Unit,
     onSelectGeocodedLocation: (GeocodingLocationDto) -> Unit,
     onRequestGpsLocation: () -> Unit,
-    onAddCity: (CityWeatherData) -> Unit,
     onRemoveCity: (String) -> Unit,
     onNavigateHome: () -> Unit,
     onToggleFavoriteCity: (String) -> Unit = {},
     onSetDefaultCity: (String) -> Unit = {},
+    onClearAllSavedCities: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     BackHandler(onBack = onNavigateHome)
@@ -76,10 +74,6 @@ fun CitiesScreen(
     val focusManager = LocalFocusManager.current
     val unit = uiState.settings.temperatureUnit
     val animationsEnabled = uiState.settings.animationsEnabled
-
-    val availableToAdd = SampleWeatherRepository.discoverableCities.filter { discoverable ->
-        uiState.cities.none { it.id == discoverable.id }
-    }
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -266,7 +260,7 @@ fun CitiesScreen(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Text(
-                                    text = "Open-Meteo Geocoding Matches (${uiState.geocodingSuggestions.size})",
+                                    text = "Matching Cities (${uiState.geocodingSuggestions.size})",
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = palette.accentCyan
@@ -341,130 +335,99 @@ fun CitiesScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Saved & Favorite Locations (${uiState.cities.size})",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = palette.primaryText
-                    )
-                    Text(
-                        text = "Tap ★ to favorite",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = palette.accentGold
-                    )
-                }
-            }
-
-            // Saved Cities List (Favorites sorted first)
-            val sortedCities = uiState.cities.sortedByDescending {
-                uiState.favoriteCityIds.contains(it.id) || it.isFavorite
-            }
-            items(items = sortedCities, key = { it.id }) { city ->
-                val isSelected = city.id == uiState.selectedCityId
-                val isFavorite = uiState.favoriteCityIds.contains(city.id) || city.isFavorite
-                val isDefaultCity = uiState.settings.defaultCityId == city.id
-                SavedCityGlassCard(
-                    city = city,
-                    isSelected = isSelected,
-                    isFavorite = isFavorite,
-                    isDefaultCity = isDefaultCity,
-                    temperatureUnit = unit,
-                    animationsEnabled = animationsEnabled,
-                    canRemove = uiState.cities.size > 1,
-                    onSelect = {
-                        onSelectCity(city.id)
-                        onNavigateHome()
-                    },
-                    onToggleFavorite = { onToggleFavoriteCity(city.id) },
-                    onSetDefault = { onSetDefaultCity(city.id) },
-                    onRemove = { onRemoveCity(city.id) }
-                )
-            }
-
-            // Quick-Add World Cities Section
-            if (availableToAdd.isNotEmpty()) {
-                item {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Explore,
-                            contentDescription = null,
-                            tint = palette.accentCyan,
-                            modifier = Modifier.size(20.dp)
-                        )
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Popular World Cities",
+                            text = "Saved & Favorite Locations (${uiState.cities.size})",
                             style = MaterialTheme.typography.titleLarge,
                             color = palette.primaryText
                         )
+                        if (uiState.cities.isNotEmpty()) {
+                            Text(
+                                text = "Tap ★ to favorite",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = palette.accentGold
+                            )
+                        }
+                    }
+
+                    if (uiState.cities.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(palette.pillBackground)
+                                .border(1.dp, palette.cardBorderSubtle, CircleShape)
+                                .clickable(onClick = onClearAllSavedCities)
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                                .testTag("clear_all_saved_cities_button"),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.DeleteOutline,
+                                contentDescription = "Clear all saved locations",
+                                tint = palette.secondaryText,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Text(
+                                text = "Clear All",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = palette.secondaryText
+                            )
+                        }
                     }
                 }
+            }
 
-                items(items = availableToAdd, key = { it.id }) { discoverCity ->
+            if (uiState.cities.isEmpty()) {
+                item {
                     GlassmorphicCard(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .testTag("add_city_card_${discoverCity.id}"),
-                        onClick = {
-                            onAddCity(discoverCity)
-                            onNavigateHome()
-                        },
-                        contentPadding = PaddingValues(16.dp)
+                            .testTag("empty_saved_cities_card"),
+                        shape = RoundedCornerShape(22.dp),
+                        contentPadding = PaddingValues(18.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                WeatherConditionArtworkIcon(
-                                    condition = discoverCity.condition,
-                                    iconSize = 40.dp,
-                                    animationsEnabled = animationsEnabled
-                                )
-                                Column {
-                                    Text(
-                                        text = discoverCity.cityName,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = palette.primaryText
-                                    )
-                                    Text(
-                                        text = discoverCity.regionAndCountry,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = palette.secondaryText
-                                    )
-                                }
-                            }
-
-                            Row(
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .background(palette.accentCyan.copy(alpha = 0.22f))
-                                    .border(1.dp, palette.accentCyan, CircleShape)
-                                    .padding(horizontal = 12.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Add,
-                                    contentDescription = stringResource(R.string.add_city_button),
-                                    tint = palette.accentCyan,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = stringResource(R.string.add_city_button),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = palette.accentCyan
-                                )
-                            }
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "No Saved Locations",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = palette.primaryText
+                            )
+                            Text(
+                                text = "Use GPS or search any city above to add a location.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = palette.secondaryText
+                            )
                         }
                     }
+                }
+            } else {
+                // Saved Cities List (Favorites sorted first)
+                val sortedCities = uiState.cities.sortedByDescending {
+                    uiState.favoriteCityIds.contains(it.id) || it.isFavorite
+                }
+                items(items = sortedCities, key = { it.id }) { city ->
+                    val isSelected = city.id == uiState.selectedCityId
+                    val isFavorite = uiState.favoriteCityIds.contains(city.id) || city.isFavorite
+                    val isDefaultCity = city.id == uiState.settings.defaultCityId
+                    SavedCityGlassCard(
+                        city = city,
+                        isSelected = isSelected,
+                        isFavorite = isFavorite,
+                        isDefaultCity = isDefaultCity,
+                        temperatureUnit = unit,
+                        animationsEnabled = animationsEnabled,
+                        canRemove = true,
+                        onSelect = {
+                            onSelectCity(city.id)
+                            onNavigateHome()
+                        },
+                        onToggleFavorite = { onToggleFavoriteCity(city.id) },
+                        onSetDefault = { onSetDefaultCity(city.id) },
+                        onRemove = { onRemoveCity(city.id) }
+                    )
                 }
             }
         }
@@ -534,7 +497,7 @@ private fun SavedCityGlassCard(
                     }
 
                     val sourceLabel = when {
-                        city.isLiveData -> "Live API"
+                        city.isLiveData -> "Live Weather"
                         city.isCachedOfflineData -> "Offline Cache (${city.cachedTimestampLabel ?: "Saved"})"
                         else -> city.currentTimeDisplay
                     }
@@ -581,42 +544,13 @@ private fun SavedCityGlassCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(
-                                if (isDefaultCity) palette.accentCyan.copy(alpha = 0.22f)
-                                else palette.pillBackground
-                            )
-                            .border(
-                                width = 1.dp,
-                                color = if (isDefaultCity) palette.accentCyan else palette.cardBorderSubtle,
-                                shape = CircleShape
-                            )
-                            .clickable(onClick = onSetDefault)
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
-                            .testTag("default_city_badge_${city.id}")
-                    ) {
-                        Text(
-                            text = if (isDefaultCity) "Default City ✓" else "Set Default",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = if (isDefaultCity) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isDefaultCity) palette.accentCyan else palette.secondaryText
-                        )
-                    }
-
-                    Text(
-                        text = city.conditionDescription,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = palette.accentCyan,
-                        maxLines = 1
-                    )
-                }
+                Text(
+                    text = city.conditionDescription,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = palette.accentCyan,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f)
+                )
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -632,7 +566,31 @@ private fun SavedCityGlassCard(
                         color = palette.secondaryText
                     )
 
-                    if (canRemove && !isSelected) {
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(
+                                if (isDefaultCity) palette.accentEmerald.copy(alpha = 0.22f)
+                                else palette.pillBackground
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = if (isDefaultCity) palette.accentEmerald else palette.cardBorderSubtle,
+                                shape = CircleShape
+                            )
+                            .clickable(onClick = onSetDefault)
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                            .testTag("set_default_city_${city.id}")
+                    ) {
+                        Text(
+                            text = if (isDefaultCity) "Default City ✓" else "Set Default",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (isDefaultCity) palette.accentEmerald else palette.secondaryText
+                        )
+                    }
+
+                    if (canRemove) {
                         IconButton(
                             onClick = onRemove,
                             modifier = Modifier

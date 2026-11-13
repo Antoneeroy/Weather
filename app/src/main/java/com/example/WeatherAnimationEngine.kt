@@ -59,6 +59,30 @@ data class WeatherSceneParameters(
 object WeatherAnimationEngine {
 
     /**
+     * Resolves atmospheric [WeatherSceneParameters] before any city or GPS location is added.
+     */
+    fun resolveDefaultSceneParameters(
+        conditionOverride: WeatherConditionType? = null,
+        sceneOverride: RealisticWeatherScene? = null
+    ): WeatherSceneParameters {
+        if (sceneOverride != null) {
+            return parametersForScene(sceneOverride, isGoldenHour = false)
+        }
+        if (conditionOverride != null) {
+            val mappedScene = when (conditionOverride) {
+                WeatherConditionType.SUNNY -> RealisticWeatherScene.SUNNY
+                WeatherConditionType.PARTLY_CLOUDY -> RealisticWeatherScene.PARTLY_CLOUDY
+                WeatherConditionType.RAINY -> RealisticWeatherScene.RAINY
+                WeatherConditionType.CLEAR_NIGHT -> RealisticWeatherScene.NIGHT_SKY
+                WeatherConditionType.THUNDERSTORM -> RealisticWeatherScene.THUNDERSTORM
+                WeatherConditionType.SNOWY -> RealisticWeatherScene.SNOW
+            }
+            return parametersForScene(mappedScene, isGoldenHour = false)
+        }
+        return parametersForScene(RealisticWeatherScene.PARTLY_CLOUDY, isGoldenHour = false)
+    }
+
+    /**
      * Resolves the exact [WeatherSceneParameters] from real Open-Meteo weather data or user scene preview.
      */
     fun resolveSceneParameters(

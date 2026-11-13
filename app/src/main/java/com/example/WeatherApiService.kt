@@ -57,14 +57,19 @@ interface WeatherApiService {
         }
 
         fun createDefaultOkHttpClient(): OkHttpClient {
-            val logging = HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BASIC
-            }
-            return OkHttpClient.Builder()
-                .addInterceptor(logging)
+            val builder = OkHttpClient.Builder()
                 .connectTimeout(15, TimeUnit.SECONDS)
                 .readTimeout(15, TimeUnit.SECONDS)
-                .build()
+                .writeTimeout(15, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(true)
+
+            if (BuildConfig.DEBUG) {
+                val logging = HttpLoggingInterceptor().apply {
+                    level = HttpLoggingInterceptor.Level.BASIC
+                }
+                builder.addInterceptor(logging)
+            }
+            return builder.build()
         }
     }
 }

@@ -286,7 +286,7 @@ fun SettingsScreen(
                 )
             }
 
-            // 3. Weather Preferences (Celsius / Fahrenheit, Default City, Weather Refresh)
+            // 3. Weather Preferences (Celsius / Fahrenheit, Weather Refresh)
             item {
                 GlassmorphicCard(
                     modifier = Modifier
@@ -372,31 +372,31 @@ fun SettingsScreen(
                         HorizontalDivider(color = palette.cardBorderSubtle)
 
                         // B. Default City
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.LocationCity,
-                                contentDescription = null,
-                                tint = palette.accentCyan,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Column {
-                                Text(
-                                    text = "Default City",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = palette.primaryText
-                                )
-                                Text(
-                                    text = "Select your home location shown when opening the app",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = palette.secondaryText
-                                )
-                            }
-                        }
-
                         if (savedCities.isNotEmpty()) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.LocationCity,
+                                    contentDescription = null,
+                                    tint = palette.accentCyan,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Column {
+                                    Text(
+                                        text = "Default City",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = palette.primaryText
+                                    )
+                                    Text(
+                                        text = "Select your home location shown when opening the app",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = palette.secondaryText
+                                    )
+                                }
+                            }
+
                             val cityScroll = rememberScrollState()
                             Row(
                                 modifier = Modifier
@@ -410,30 +410,30 @@ fun SettingsScreen(
                                         modifier = Modifier
                                             .clip(CircleShape)
                                             .background(
-                                                if (isDefault) palette.accentCyan.copy(alpha = 0.25f)
+                                                if (isDefault) palette.accentEmerald.copy(alpha = 0.24f)
                                                 else palette.pillBackground
                                             )
                                             .border(
-                                                width = if (isDefault) 1.4.dp else 1.dp,
-                                                color = if (isDefault) palette.accentCyan else palette.cardBorderSubtle,
+                                                width = if (isDefault) 1.5.dp else 1.dp,
+                                                color = if (isDefault) palette.accentEmerald else palette.cardBorderSubtle,
                                                 shape = CircleShape
                                             )
                                             .clickable { onSelectDefaultCity(city.id) }
-                                            .padding(horizontal = 14.dp, vertical = 8.dp)
-                                            .testTag("default_city_option_${city.id}")
+                                            .padding(horizontal = 13.dp, vertical = 7.dp)
+                                            .testTag("default_city_${city.id}")
                                     ) {
                                         Text(
-                                            text = city.cityName,
+                                            text = if (isDefault) "${city.cityName} ✓" else city.cityName,
                                             style = MaterialTheme.typography.labelMedium,
                                             fontWeight = if (isDefault) FontWeight.Bold else FontWeight.Medium,
-                                            color = if (isDefault) palette.primaryText else palette.secondaryText
+                                            color = if (isDefault) palette.accentEmerald else palette.secondaryText
                                         )
                                     }
                                 }
                             }
-                        }
 
-                        HorizontalDivider(color = palette.cardBorderSubtle)
+                            HorizontalDivider(color = palette.cardBorderSubtle)
+                        }
 
                         // C. Weather Refresh Interval
                         Row(
@@ -594,11 +594,48 @@ fun SettingsScreen(
                             // 1. Daily Weather
                             PublicNotificationToggleRow(
                                 title = "Daily Weather Summary",
-                                subtitle = "Morning forecast delivered at your chosen time",
+                                subtitle = "Morning forecast delivered at your chosen time (${settings.notificationTime.label})",
                                 checked = settings.dailySummaryNotification,
                                 onCheckedChange = onToggleDailySummaryNotif,
                                 testTag = "daily_summary_switch"
                             )
+
+                            if (settings.dailySummaryNotification) {
+                                val timeScroll = rememberScrollState()
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .horizontalScroll(timeScroll),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    NotificationTimeOption.entries.forEach { timeOpt ->
+                                        val isTimeSelected = settings.notificationTime == timeOpt
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(CircleShape)
+                                                .background(
+                                                    if (isTimeSelected) palette.accentCyan.copy(alpha = 0.25f)
+                                                    else palette.pillBackground
+                                                )
+                                                .border(
+                                                    width = if (isTimeSelected) 1.4.dp else 1.dp,
+                                                    color = if (isTimeSelected) palette.accentCyan else palette.cardBorderSubtle,
+                                                    shape = CircleShape
+                                                )
+                                                .clickable { onSelectNotificationTime(timeOpt) }
+                                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                                                .testTag("notification_time_${timeOpt.name}")
+                                        ) {
+                                            Text(
+                                                text = timeOpt.label,
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = if (isTimeSelected) FontWeight.Bold else FontWeight.Medium,
+                                                color = if (isTimeSelected) palette.primaryText else palette.secondaryText
+                                            )
+                                        }
+                                    }
+                                }
+                            }
 
                             // 2. Rain Alerts
                             PublicNotificationToggleRow(
@@ -691,7 +728,7 @@ fun SettingsScreen(
                             }
                             Icon(
                                 imageVector = if (showPrivacyPolicyDetails) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                                contentDescription = null,
+                                contentDescription = if (showPrivacyPolicyDetails) "Collapse Privacy Policy" else "Expand Privacy Policy",
                                 tint = palette.secondaryText
                             )
                         }
@@ -775,7 +812,7 @@ fun SettingsScreen(
                             }
                             Icon(
                                 imageVector = if (showTermsDetails) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                                contentDescription = null,
+                                contentDescription = if (showTermsDetails) "Collapse Terms and Conditions" else "Expand Terms and Conditions",
                                 tint = palette.secondaryText
                             )
                         }

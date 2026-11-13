@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Weather</string>
-    <string name="live_api_badge">Open-Meteo Live API</string>
-    <string name="sample_data_badge">Offline Fallback • Sample Data</string>
+    <string name="live_api_badge">Live Forecast</string>
+    <string name="sample_data_badge">Saved Snapshot</string>
     <string name="nav_home">Home</string>
     <string name="nav_forecast">10-Day</string>
     <string name="nav_cities">Cities</string>
@@ -18,10 +18,9 @@
     <string name="card_uv_index">UV Index</string>
     <string name="card_sunrise">Sunrise</string>
     <string name="card_sunset">Sunset</string>
-    <string name="cities_title">Cities &amp; Global Search</string>
-    <string name="cities_subtitle">Search any city worldwide via Open-Meteo Geocoding or switch saved locations</string>
+    <string name="cities_title">Cities &amp; Search</string>
+    <string name="cities_subtitle">Search any city worldwide or manage your saved locations</string>
     <string name="search_cities_hint">Search city name (e.g. Paris, Seattle, Mumbai)…</string>
-    <string name="add_city_button">Add City</string>
     <string name="settings_title">Settings</string>
     <string name="settings_appearance_section">Appearance &amp; Display</string>
     <string name="settings_dark_theme_title">Dark Glassmorphism Theme</string>

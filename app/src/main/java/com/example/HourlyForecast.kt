@@ -33,7 +33,6 @@ import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Grain
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Thermostat
-import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon

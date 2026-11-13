@@ -21,6 +21,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.flow.first
 import java.util.Calendar
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 /**
@@ -195,7 +196,7 @@ object WeatherNotificationHelper {
                 channelId = CHANNEL_WEATHER_ALERTS,
                 notificationId = NOTIF_ID_RAIN_ALERT,
                 title = "Rain Alert: ${city.cityName} ($todayPop% Chance)",
-                body = "Precipitation expected (${String.format("%.1f", precipMm)} mm). Keep an umbrella handy."
+                body = "Precipitation expected (${String.format(Locale.US, "%.1f", precipMm)} mm). Keep an umbrella handy."
             )
             postedAny = true
         }
@@ -212,7 +213,7 @@ object WeatherNotificationHelper {
                     channelId = CHANNEL_WEATHER_ALERTS,
                     notificationId = NOTIF_ID_SEVERE_WEATHER,
                     title = "${topAlert.title} (${city.cityName})",
-                    body = "${topAlert.summary} [Estimated Open-Meteo Advisory]"
+                    body = "${topAlert.summary} (Estimated Forecast Advisory)"
                 )
                 postedAny = true
             }
@@ -377,20 +378,26 @@ class WeatherBackgroundSyncWorker(
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
+        val presetIds = setOf(
+            "sf_us", "tokyo_jp", "london_uk", "dubai_ae", "zermatt_ch",
+            "nyc_us", "singapore_sg", "paris_fr"
+        )
         val prefs = WeatherPreferences(applicationContext)
         val settings = prefs.settingsFlow.first()
-        val selectedCityId = prefs.selectedCityIdFlow.first() ?: settings.defaultCityId
-        val savedRecords = prefs.loadSavedCitiesRecords()
-        val initialCities = SampleWeatherRepository.getInitialCities()
+        val selectedCityId = prefs.selectedCityIdFlow.first()?.takeIf { it !in presetIds }
+        val savedRecords = prefs.loadSavedCitiesRecords().filterNot { it.id in presetIds }
 
-        val targetCityRecord = savedRecords.find { it.id == selectedCityId }
-        val fallbackCity = initialCities.find { it.id == selectedCityId } ?: initialCities.first()
+        val targetId = selectedCityId?.takeIf { it.isNotBlank() }
+            ?: settings.defaultCityId.takeIf { it.isNotBlank() && it !in presetIds }
 
-        val cityId = targetCityRecord?.id ?: fallbackCity.id
-        val cityName = targetCityRecord?.cityName ?: fallbackCity.cityName
-        val regionAndCountry = targetCityRecord?.regionAndCountry ?: fallbackCity.regionAndCountry
-        val lat = targetCityRecord?.latitude ?: fallbackCity.latitude
-        val lon = targetCityRecord?.longitude ?: fallbackCity.longitude
+        val savedRecord = savedRecords.find { it.id == targetId } ?: savedRecords.firstOrNull()
+            ?: return Result.success()
+
+        val cityId = savedRecord.id
+        val cityName = savedRecord.cityName
+        val regionAndCountry = savedRecord.regionAndCountry
+        val lat = savedRecord.latitude
+        val lon = savedRecord.longitude
 
         val repository = WeatherRepository(applicationContext)
         return when (
@@ -400,7 +407,7 @@ class WeatherBackgroundSyncWorker(
                 regionAndCountry = regionAndCountry,
                 latitude = lat,
                 longitude = lon,
-                isCurrentLocation = false
+                isCurrentLocation = cityId == "gps_current_location"
             )
         ) {
             is WeatherApiResult.Success -> {

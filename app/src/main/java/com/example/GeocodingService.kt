@@ -61,8 +61,21 @@ data class GeocodingLocationDto(
         get() = listOfNotNull(admin1?.takeIf { it.isNotBlank() }, country?.takeIf { it.isNotBlank() })
             .distinct()
             .joinToString(", ")
-            .ifBlank { "Global Coordinates (${String.format("%.2f", latitude)}, ${String.format("%.2f", longitude)})" }
+            .ifBlank {
+                String.format(
+                    java.util.Locale.US,
+                    "Global Coordinates (%.2f, %.2f)",
+                    latitude,
+                    longitude
+                )
+            }
 
     val uniqueCityKey: String
-        get() = "geo_${id}_${name.lowercase().replace(" ", "_")}"
+        get() {
+            val slug = name.lowercase(java.util.Locale.US)
+                .replace(Regex("[^a-z0-9]+"), "_")
+                .trim('_')
+                .ifBlank { "city" }
+            return "geo_${id}_$slug"
+        }
 }
