@@ -524,6 +524,17 @@ fun SettingsScreen(
                                 color = palette.accentCyan
                             )
                         }
+
+                        if (!notificationStatusMessage.isNullOrBlank() &&
+                            notificationStatusMessage.contains("Widget", ignoreCase = true)
+                        ) {
+                            Text(
+                                text = notificationStatusMessage,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = palette.accentEmerald,
+                                modifier = Modifier.testTag("widget_status_feedback")
+                            )
+                        }
                     }
                 }
             }
@@ -768,6 +779,11 @@ fun SettingsScreen(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = palette.accentCyan
                                 )
+                                Text(
+                                    text = stringResource(R.string.privacy_policy_url_label),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = palette.secondaryText
+                                )
                             }
                         }
                     }
@@ -881,6 +897,11 @@ fun SettingsScreen(
                             text = stringResource(R.string.about_developer_desc),
                             style = MaterialTheme.typography.bodyMedium,
                             color = palette.secondaryText
+                        )
+                        Text(
+                            text = stringResource(R.string.official_website_label),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = palette.accentCyan
                         )
                     }
                 }

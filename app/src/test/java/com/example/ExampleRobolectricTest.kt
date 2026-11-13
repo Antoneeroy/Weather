@@ -584,5 +584,31 @@ class ExampleRobolectricTest {
         assertTrue(emptyControlSearch is WeatherApiResult.Success)
         assertTrue((emptyControlSearch as WeatherApiResult.Success).data.isEmpty())
     }
+
+    @Test
+    fun `release metadata, package identity, permission denial, and widget status flows work cleanly`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        assertEquals("com.aistudio.weather.glsmph", context.packageName)
+        assertEquals("Weather", context.getString(R.string.app_name))
+        assertEquals("Version 5.1.0", context.getString(R.string.settings_app_version))
+        assertTrue(context.getString(R.string.about_developer_desc).contains("Antonee"))
+        assertTrue(
+            context.getString(R.string.privacy_policy_url_label)
+                .contains("https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md")
+        )
+
+        val vm = WeatherViewModel(appContext = context, autoFetchOnInit = false)
+
+        // Location permission denied state
+        vm.onLocationPermissionDenied()
+        assertTrue(vm.uiState.value.gpsStatus is GpsLocationStatus.PermissionDenied)
+
+        // Add city and verify widget sync updates status message
+        val testCity = createTestCity()
+        vm.addSavedCity(testCity)
+        vm.pinOrSyncHomeScreenWidget()
+        assertNotNull(vm.uiState.value.notificationStatusMessage)
+        assertTrue(vm.uiState.value.notificationStatusMessage!!.contains("Widget", ignoreCase = true))
+    }
 }
 

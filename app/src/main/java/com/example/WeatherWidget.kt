@@ -81,7 +81,7 @@ object WeatherWidgetUpdater {
             city.isLiveData && !lastUpdatedLabel.isNullOrBlank() -> "Live • $lastUpdatedLabel"
             city.isCachedOfflineData && !city.cachedTimestampLabel.isNullOrBlank() -> "Cached • ${city.cachedTimestampLabel}"
             !lastUpdatedLabel.isNullOrBlank() -> "Updated $lastUpdatedLabel"
-            else -> "Open-Meteo"
+            else -> "Live Forecast"
         }
 
         // Extract next 4 hours from hourly forecast
@@ -136,7 +136,7 @@ object WeatherWidgetUpdater {
         val tempText = prefs.getString(KEY_TEMP_TEXT, "--") ?: "--"
         val conditionText = prefs.getString(KEY_CONDITION_TEXT, "Tap to choose location") ?: "Tap to choose location"
         val highLowText = prefs.getString(KEY_HIGH_LOW_TEXT, "Open app to sync weather") ?: "Open app to sync weather"
-        val updatedText = prefs.getString(KEY_UPDATED_TEXT, "Open-Meteo") ?: "Open-Meteo"
+        val updatedText = prefs.getString(KEY_UPDATED_TEXT, "Tap to sync") ?: "Tap to sync"
 
         val h1Time = prefs.getString(KEY_H1_TIME, "+1h") ?: "+1h"
         val h1Icon = prefs.getString(KEY_H1_ICON, "☁️") ?: "☁️"

@@ -273,7 +273,7 @@ fun ForecastScreen(
                                     color = palette.primaryText
                                 )
                                 val dataBadge = when {
-                                    city.isLiveData -> "Live Open-Meteo"
+                                    city.isLiveData -> "Live Forecast"
                                     city.isCachedOfflineData -> "Offline Cached (${city.cachedTimestampLabel ?: "Saved"})"
                                     else -> city.timeZoneOffsetLabel
                                 }
@@ -484,7 +484,7 @@ private fun ForecastSyncBanner(
                 ) {
                     WeatherOrbitalLoadingIndicator(sizeDp = 24.dp)
                     Text(
-                        text = "Loading real 10-day & 24-hour forecast from Open-Meteo…",
+                        text = "Loading 10-day & 24-hour forecast…",
                         style = MaterialTheme.typography.bodyMedium,
                         color = palette.primaryText
                     )

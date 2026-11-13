@@ -144,21 +144,39 @@ class LocationManager(private val context: Context) {
     }
 
     @Suppress("DEPRECATION")
-    private fun reverseGeocodeCoordinates(lat: Double, lon: Double): Pair<String, String> {
+    private suspend fun reverseGeocodeCoordinates(lat: Double, lon: Double): Pair<String, String> {
+        val fallbackPair = Pair(
+            "Current Location",
+            String.format(Locale.US, "%.2f°, %.2f°", lat, lon)
+        )
         return try {
             if (!Geocoder.isPresent()) {
-                return Pair(
-                    "Current Location",
-                    String.format(Locale.US, "%.2f°, %.2f°", lat, lon)
-                )
+                return fallbackPair
             }
             val geocoder = Geocoder(context, Locale.getDefault())
-            val addresses = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                geocoder.getFromLocation(lat, lon, 1)
+            val first = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                withTimeoutOrNull(3500L) {
+                    suspendCancellableCoroutine { cont ->
+                        geocoder.getFromLocation(
+                            lat,
+                            lon,
+                            1,
+                            object : Geocoder.GeocodeListener {
+                                override fun onGeocode(addresses: MutableList<android.location.Address>) {
+                                    if (cont.isActive) cont.resume(addresses.firstOrNull())
+                                }
+
+                                override fun onError(errorMessage: String?) {
+                                    if (cont.isActive) cont.resume(null)
+                                }
+                            }
+                        )
+                    }
+                }
             } else {
-                geocoder.getFromLocation(lat, lon, 1)
+                geocoder.getFromLocation(lat, lon, 1)?.firstOrNull()
             }
-            val first = addresses?.firstOrNull()
+
             if (first != null) {
                 val city = first.locality
                     ?: first.subAdminArea
@@ -170,10 +188,10 @@ class LocationManager(private val context: Context) {
                     .ifBlank { String.format(Locale.US, "%.2f°, %.2f°", lat, lon) }
                 Pair(city, region)
             } else {
-                Pair("Current Location", String.format(Locale.US, "%.2f°, %.2f°", lat, lon))
+                fallbackPair
             }
         } catch (_: Exception) {
-            Pair("Current Location", String.format(Locale.US, "%.2f°, %.2f°", lat, lon))
+            fallbackPair
         }
     }
 }
