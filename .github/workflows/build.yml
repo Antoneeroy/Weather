@@ -25,43 +25,44 @@ jobs:
         with:
           gradle-version: '9.3.1'
 
-      - name: Prepare Release Signing Keystore
+      - name: Validate and Restore Persistent Release Keystore from GitHub Secrets
         env:
           SECRET_KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           SECRET_STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
           SECRET_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          if [ -n "$SECRET_KEYSTORE_BASE64" ] && [ -n "$SECRET_STORE_PASSWORD" ] && [ -n "$SECRET_KEY_PASSWORD" ]; then
-            echo "Using repository release keystore from GitHub Secrets..."
-            echo "$SECRET_KEYSTORE_BASE64" | base64 --decode > "${GITHUB_WORKSPACE}/my-upload-key.jks"
-            echo "KEYSTORE_PATH=${GITHUB_WORKSPACE}/my-upload-key.jks" >> "$GITHUB_ENV"
-            echo "STORE_PASSWORD=${SECRET_STORE_PASSWORD}" >> "$GITHUB_ENV"
-            echo "KEY_PASSWORD=${SECRET_KEY_PASSWORD}" >> "$GITHUB_ENV"
-          else
-            echo "Generating release signing keystore (alias: upload) for signed app-release.apk..."
-            REL_PASS="weather_release_2026"
-            keytool -genkeypair -v \
-              -keystore "${GITHUB_WORKSPACE}/my-upload-key.jks" \
-              -storetype PKCS12 \
-              -storepass "$REL_PASS" \
-              -keypass "$REL_PASS" \
-              -alias upload \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -dname "CN=Antonee, OU=Mobile, O=Antonee Weather, L=City, S=State, C=US"
-            echo "KEYSTORE_PATH=${GITHUB_WORKSPACE}/my-upload-key.jks" >> "$GITHUB_ENV"
-            echo "STORE_PASSWORD=${REL_PASS}" >> "$GITHUB_ENV"
-            echo "KEY_PASSWORD=${REL_PASS}" >> "$GITHUB_ENV"
+          if [ -z "$SECRET_KEYSTORE_BASE64" ] || [ -z "$SECRET_STORE_PASSWORD" ] || [ -z "$SECRET_KEY_PASSWORD" ]; then
+            echo "::error::Missing required release signing secrets (KEYSTORE_BASE64, STORE_PASSWORD, or KEY_PASSWORD)."
+            echo "Refusing to generate a new keystore so the existing app signing identity is never altered."
+            echo "Please configure KEYSTORE_BASE64, STORE_PASSWORD, and KEY_PASSWORD in GitHub -> Settings -> Secrets and variables -> Actions."
+            exit 1
           fi
+
+          KEYSTORE_FILE="${RUNNER_TEMP}/my-upload-key.jks"
+          echo "$SECRET_KEYSTORE_BASE64" | tr -d ' \t\r\n' | base64 --decode > "$KEYSTORE_FILE"
+
+          echo "Verifying persistent release keystore (alias: upload)..."
+          keytool -list -v \
+            -keystore "$KEYSTORE_FILE" \
+            -storepass "$SECRET_STORE_PASSWORD" \
+            -alias upload | grep -E "(Alias name:|Owner:|Valid from:|SHA1:|SHA256:)"
+
+          echo "KEYSTORE_PATH=${KEYSTORE_FILE}" >> "$GITHUB_ENV"
+          echo "STORE_PASSWORD=${SECRET_STORE_PASSWORD}" >> "$GITHUB_ENV"
+          echo "KEY_PASSWORD=${SECRET_KEY_PASSWORD}" >> "$GITHUB_ENV"
 
       - name: Build Signed Release APK (assembleRelease)
         run: gradle assembleRelease
 
-      - name: Verify Signed app-release.apk
+      - name: Verify Signed app-release.apk Certificate & Package Info
         run: |
           ls -lh app/build/outputs/apk/release/app-release.apk
-          jarsigner -verify -verbose -certs app/build/outputs/apk/release/app-release.apk | head -n 30
+          APKSIGNER=$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}" -name apksigner 2>/dev/null | sort -V | tail -n 1)
+          if [ -n "$APKSIGNER" ]; then
+            "$APKSIGNER" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
+          else
+            jarsigner -verify -verbose -certs app/build/outputs/apk/release/app-release.apk | head -n 30
+          fi
 
       - name: Upload Signed Release APK Artifact
         uses: actions/upload-artifact@v4
@@ -70,3 +71,7 @@ jobs:
           path: app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 90
+
+      - name: Clean Up Temporary Keystore File
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/my-upload-key.jks"

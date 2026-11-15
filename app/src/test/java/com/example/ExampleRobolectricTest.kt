@@ -610,7 +610,7 @@ class ExampleRobolectricTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         assertEquals("com.aistudio.weather.glsmph", context.packageName)
         assertEquals("Weather", context.getString(R.string.app_name))
-        assertEquals("Version 5.1.0", context.getString(R.string.settings_app_version))
+        assertEquals("Version 5.2.0", context.getString(R.string.settings_app_version))
         assertTrue(context.getString(R.string.about_developer_desc).contains("Antonee"))
         assertTrue(
             context.getString(R.string.privacy_policy_url_label)
