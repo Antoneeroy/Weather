@@ -2,7 +2,7 @@
 
 **Project Name:** Weather  
 **Package Name:** `com.aistudio.weather.glsmph`  
-**Version:** `5.1.0` (`versionCode = 6`)  
+**Version:** `5.3.0` (`versionCode = 8`)  
 **Minimum Android SDK:** Android 8.0 Oreo (API 26)  
 **Target Android SDK:** API 36  
 **Developer:** Antonee  
@@ -15,7 +15,7 @@
 | Audited Area | Findings | Resolution Implemented |
 | :--- | :--- | :--- |
 | **Uptodown Rejection Cause** | Rejected with: *"Not enough information was provided to be able to review the app. Please include a description of how your app works along with screenshots and an icon."* Repository lacked `README.md`, `PRIVACY_POLICY.md`, a standalone 512×512 PNG store icon, and complete Uptodown listing copy. | Added root `README.md`, `PRIVACY_POLICY.md`, `UPTODOWN_SUBMISSION_PACKAGE.md`, a 512×512 PNG icon (`weather_icon_512x512.png`), and complete store descriptions & screenshot guide. |
-| **Gradle & SDK Configuration** | `minSdk` was set to `24` instead of Android 8.0 (`API 26`); `androidx.navigation.compose` was declared in `app/build.gradle.kts` but unused in source code. | Updated `minSdk = 26`, bumped `versionCode = 6` and `versionName = "5.1.0"`, and commented out the unused `androidx.navigation.compose` dependency. |
+| **Gradle & SDK Configuration** | `minSdk` was set to `24` instead of Android 8.0 (`API 26`); `androidx.navigation.compose` was declared in `app/build.gradle.kts` but unused in source code. | Updated `minSdk = 26`, bumped `versionCode = 8` and `versionName = "5.3.0"`, and commented out the unused `androidx.navigation.compose` dependency. |
 | **Location & Deprecated APIs** | `LocationManager.reverseGeocodeCoordinates` called the deprecated synchronous `Geocoder.getFromLocation(lat, lon, 1)` on Android 13+ (API 33+). | Upgraded to the asynchronous `Geocoder.GeocodeListener` API on Android 13+ (`TIRAMISU`) with a 3.5-second coroutine timeout and safe fallback. |
 | **Home Screen Widget Feedback** | Tapping *"Add or Update Home Screen Widget"* in Settings stored its status message in `notificationStatusMessage`, which was only visible when the Notifications master switch was enabled. | Added a dedicated status feedback label directly inside the **Weather Preferences** card below the widget button so users always see immediate confirmation. |
 | **Consumer Copy & Metadata** | Technical labels (`"Live Open-Meteo"`, `"Open-Meteo Geocoding Matches"`, `"Live API"`) appeared in user-facing UI, and Settings lacked the developer name (`Antonee`), repository URL, and public Privacy Policy URL. | Updated UI labels to consumer-friendly text (`"Live Forecast"`, `"Matching Cities"`, `"Live Weather"`) and displayed Developer (`Antonee`), Official Repository URL, and Privacy Policy URL in Settings. |
@@ -29,8 +29,8 @@
 - **Category:** `Weather` (or `Lifestyle > Weather`)
 - **Developer / Author:** `Antonee`
 - **Package Name:** `com.aistudio.weather.glsmph`
-- **Version Name:** `5.1.0`
-- **Version Code:** `6`
+- **Version Name:** `5.3.0`
+- **Version Code:** `8`
 - **License:** Free (No Ads, No In-App Purchases)
 - **Minimum Operating System:** Android 8.0 (API 26)
 - **Official Website:** `https://github.com/Antoneeroy/Weather`

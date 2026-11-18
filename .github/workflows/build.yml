@@ -33,7 +33,7 @@ jobs:
         run: |
           if [ -z "$SECRET_KEYSTORE_BASE64" ] || [ -z "$SECRET_STORE_PASSWORD" ] || [ -z "$SECRET_KEY_PASSWORD" ]; then
             echo "::error::Missing required release signing secrets (KEYSTORE_BASE64, STORE_PASSWORD, or KEY_PASSWORD)."
-            echo "Refusing to generate a new keystore so the existing app signing identity is never altered."
+            echo "Refusing to generate a temporary keystore so the permanent production signing identity is never altered."
             echo "Please configure KEYSTORE_BASE64, STORE_PASSWORD, and KEY_PASSWORD in GitHub -> Settings -> Secrets and variables -> Actions."
             exit 1
           fi
@@ -54,14 +54,26 @@ jobs:
       - name: Build Signed Release APK (assembleRelease)
         run: gradle assembleRelease
 
-      - name: Verify Signed app-release.apk Certificate & Package Info
+      - name: Verify APK Signature, Package Name, versionCode & minSdkVersion
         run: |
-          ls -lh app/build/outputs/apk/release/app-release.apk
+          APK_PATH="app/build/outputs/apk/release/app-release.apk"
+          ls -lh "$APK_PATH"
+
+          echo "=== 1. Verifying APK Signature (SHA-256 Certificate) ==="
           APKSIGNER=$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}" -name apksigner 2>/dev/null | sort -V | tail -n 1)
           if [ -n "$APKSIGNER" ]; then
-            "$APKSIGNER" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
+            "$APKSIGNER" verify --verbose --print-certs "$APK_PATH"
           else
-            jarsigner -verify -verbose -certs app/build/outputs/apk/release/app-release.apk | head -n 30
+            jarsigner -verify -verbose -certs "$APK_PATH" | head -n 30
+          fi
+
+          echo "=== 2. Verifying Package Name, versionCode, versionName & minSdkVersion ==="
+          AAPT2=$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}" -name aapt2 2>/dev/null | sort -V | tail -n 1)
+          if [ -n "$AAPT2" ]; then
+            BADGING=$("$AAPT2" dump badging "$APK_PATH")
+            echo "$BADGING" | grep -E "^(package:|sdkVersion:|targetSdkVersion:)"
+            echo "$BADGING" | grep -q "package: name='com.aistudio.weather.glsmph'" || { echo "::error::Package name mismatch!"; exit 1; }
+            echo "$BADGING" | grep -q "sdkVersion:'26'" || { echo "::error::minSdkVersion must be 26 (Android 8.0+)!"; exit 1; }
           fi
 
       - name: Upload Signed Release APK Artifact

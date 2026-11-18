@@ -6,7 +6,7 @@
 - **Package Name:** `com.aistudio.weather.glsmph`
 - **Category:** Weather
 - **Developer:** Antonee
-- **Version:** `5.1.0` (`versionCode = 6`)
+- **Version:** `5.3.0` (`versionCode = 8`)
 - **Minimum Android Version:** Android 8.0 Oreo (API 26)
 - **Target Android Version:** API 36
 - **Official Repository:** [https://github.com/Antoneeroy/Weather](https://github.com/Antoneeroy/Weather)

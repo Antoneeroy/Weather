@@ -4,7 +4,7 @@
 - **Last Updated:** November 13, 2026
 - **Application Name:** Weather
 - **Package Name:** `com.aistudio.weather.glsmph`
-- **Version:** `5.1.0` (`versionCode = 6`)
+- **Version:** `5.3.0` (`versionCode = 8`)
 - **Developer:** Antonee
 - **Official Repository:** [https://github.com/Antoneeroy/Weather](https://github.com/Antoneeroy/Weather)
 - **GitHub Pages Privacy Policy URL:** [https://antoneeroy.github.io/Weather/privacy-policy.html](https://antoneeroy.github.io/Weather/privacy-policy.html)

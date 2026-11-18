@@ -32,7 +32,7 @@
     <string name="settings_animations_title">Weather Animations</string>
     <string name="settings_animations_desc">Smooth cloud movement, rain particles, sun rays &amp; starlight</string>
     <string name="settings_about_section">About Weather</string>
-    <string name="settings_app_version">Version 5.2.0</string>
+    <string name="settings_app_version">Version 5.3.0</string>
     <string name="settings_architecture">Live Weather Forecasts &amp; Worldwide City Search</string>
     <string name="settings_roadmap">A clean, accurate, and ad-free weather experience with live forecasts, hourly conditions, and home screen widgets.</string>
     <string name="refresh_weather">Refresh Weather</string>

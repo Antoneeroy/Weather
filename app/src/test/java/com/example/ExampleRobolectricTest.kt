@@ -610,7 +610,7 @@ class ExampleRobolectricTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         assertEquals("com.aistudio.weather.glsmph", context.packageName)
         assertEquals("Weather", context.getString(R.string.app_name))
-        assertEquals("Version 5.2.0", context.getString(R.string.settings_app_version))
+        assertEquals("Version 5.3.0", context.getString(R.string.settings_app_version))
         assertTrue(context.getString(R.string.about_developer_desc).contains("Antonee"))
         assertTrue(
             context.getString(R.string.privacy_policy_url_label)
@@ -629,6 +629,56 @@ class ExampleRobolectricTest {
         vm.pinOrSyncHomeScreenWidget()
         assertNotNull(vm.uiState.value.notificationStatusMessage)
         assertTrue(vm.uiState.value.notificationStatusMessage!!.contains("Widget", ignoreCase = true))
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `in_place_update_preserves_saved_cities_favorites_offline_cache_and_user_settings`() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val prefsBeforeUpdate = WeatherPreferences(context)
+
+        val savedParis = createTestCity(id = "user_paris", cityName = "Paris")
+        val savedTokyo = createTestCity(
+            id = "user_tokyo",
+            cityName = "Tokyo",
+            regionAndCountry = "Tokyo, Japan",
+            latitude = 35.6762,
+            longitude = 139.6503
+        )
+        val customSettings = WeatherAppSettings(
+            themeMode = ThemeModeOption.LIGHT,
+            isDarkTheme = false,
+            temperatureUnit = TemperatureUnit.FAHRENHEIT,
+            animationsEnabled = true,
+            animationQuality = AnimationQualityLevel.LOW,
+            batterySaverMode = true,
+            notificationsEnabled = true,
+            dailySummaryNotification = true,
+            rainNotification = true,
+            severeWeatherNotification = true,
+            notificationTime = NotificationTimeOption.TIME_07_00,
+            defaultCityId = "user_tokyo",
+            refreshInterval = RefreshIntervalOption.EVERY_3_HOURS
+        )
+
+        // Simulate state saved prior to an in-place APK update
+        prefsBeforeUpdate.saveSettings(customSettings)
+        prefsBeforeUpdate.saveFavoriteCityIds(setOf("user_tokyo"))
+        prefsBeforeUpdate.saveSelectedCityId("user_tokyo")
+        prefsBeforeUpdate.saveCustomCitiesList(listOf(savedParis, savedTokyo), setOf("user_tokyo"))
+        prefsBeforeUpdate.cacheLiveCityWeather(savedTokyo, "8:15 AM")
+
+        // Simulate new WeatherPreferences instance after installing new versionCode over existing app
+        val prefsAfterUpdate = WeatherPreferences(context)
+        val restoredRecords = prefsAfterUpdate.loadSavedCitiesRecords()
+        val restoredCachedTokyo = prefsAfterUpdate.getCachedCityWeather("user_tokyo")
+
+        assertEquals(2, restoredRecords.size)
+        assertTrue(restoredRecords.any { it.id == "user_paris" && it.cityName == "Paris" })
+        assertTrue(restoredRecords.any { it.id == "user_tokyo" && it.isFavorite })
+        assertNotNull(restoredCachedTokyo)
+        assertEquals("Tokyo", restoredCachedTokyo?.weatherData?.cityName)
+        assertEquals("8:15 AM", restoredCachedTokyo?.cachedAtFormatted)
     }
 
     @Test
