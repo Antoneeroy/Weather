@@ -1,7 +1,7 @@
 # Privacy Policy for Weather (`com.aistudio.weather.glsmph`)
 
 - **Effective Date:** November 13, 2026
-- **Last Updated:** November 13, 2026
+- **Last Updated:** November 19, 2026
 - **Application Name:** Weather
 - **Package Name:** `com.aistudio.weather.glsmph`
 - **Version:** `5.3.0` (`versionCode = 8`)
@@ -85,9 +85,9 @@ All user preferences and saved locations are stored **locally on your device** i
   - `weather_daily_summary_channel` (*Weather Forecast & Notification Widget*): Used for optional Daily Weather Summary and Morning Briefing notifications, including a compact and expanded 4-hour forecast layout.
   - `weather_severe_alerts_channel` (*Rain & Severe Weather Advisories*): Used for optional Rain Alerts and estimated Severe Weather Advisories derived from Open-Meteo forecast metrics.
 - **Background Sync via WorkManager:**
-  - When periodic refresh (Every 1 Hour, 3 Hours, 6 Hours, or 12 Hours) or notifications are enabled in Settings, `WeatherBackgroundSyncWorker` runs periodically via Android Jetpack `WorkManager` (requiring an active network connection).
+  - When periodic refresh (**Every 30 Minutes**, **Every 1 Hour**, **Every 3 Hours**, or **Every 6 Hours**) or notifications are enabled in Settings, `WeatherBackgroundSyncWorker` runs periodically via Android Jetpack `WorkManager` (requiring an active network connection).
   - The background worker refreshes weather using the **stored coordinates** of your active/default saved city in DataStore — it does **not** access live device GPS in the background.
-  - Selecting **Manual Only** refresh and turning off **Enable Notifications** cancels all periodic background work.
+  - Selecting **Manual Refresh Only** and turning off **Enable Notifications** cancels all periodic background work.
 
 ---
 

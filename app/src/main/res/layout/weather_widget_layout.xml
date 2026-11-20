@@ -26,7 +26,7 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="San Francisco"
+                android:text="@string/widget_placeholder_city"
                 android:textColor="#FFFFFF"
                 android:textSize="20sp"
                 android:textStyle="bold" />
@@ -38,7 +38,7 @@
                 android:layout_marginTop="2dp"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="☀️ Partly Cloudy • H: 23° L: 13°"
+                android:text="@string/widget_placeholder_condition"
                 android:textColor="#BAE6FD"
                 android:textSize="12sp"
                 android:textStyle="normal" />
@@ -49,18 +49,19 @@
             android:id="@+id/widget_temperature_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="21°"
+            android:text="@string/widget_placeholder_temp"
             android:textColor="#FFFFFF"
             android:textSize="36sp"
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- Hourly Forecast Row: 4 Glass Pills inspired by reference image -->
+    <!-- Hourly Forecast Row: 4 Glass Pills -->
     <LinearLayout
         android:id="@+id/widget_hourly_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
+        android:baselineAligned="false"
         android:gravity="center"
         android:orientation="horizontal">
 
@@ -79,9 +80,9 @@
                 android:id="@+id/widget_h1_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Now"
+                android:text="@string/widget_placeholder_now"
                 android:textColor="#BAE6FD"
-                android:textSize="10sp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -89,7 +90,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="⛅"
+                android:text="@string/widget_placeholder_icon"
                 android:textSize="16sp" />
 
             <TextView
@@ -97,7 +98,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="21°"
+                android:text="@string/widget_placeholder_temp"
                 android:textColor="#FFFFFF"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -119,16 +120,16 @@
                 android:id="@+id/widget_h2_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="1 PM"
+                android:text="@string/widget_placeholder_h1"
                 android:textColor="#E2E8F0"
-                android:textSize="10sp" />
+                android:textSize="11sp" />
 
             <TextView
                 android:id="@+id/widget_h2_icon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="☀️"
+                android:text="@string/widget_placeholder_icon"
                 android:textSize="16sp" />
 
             <TextView
@@ -136,7 +137,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="22°"
+                android:text="@string/widget_placeholder_temp"
                 android:textColor="#FFFFFF"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -158,16 +159,16 @@
                 android:id="@+id/widget_h3_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="2 PM"
+                android:text="@string/widget_placeholder_h2"
                 android:textColor="#E2E8F0"
-                android:textSize="10sp" />
+                android:textSize="11sp" />
 
             <TextView
                 android:id="@+id/widget_h3_icon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="⛅"
+                android:text="@string/widget_placeholder_icon"
                 android:textSize="16sp" />
 
             <TextView
@@ -175,7 +176,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="23°"
+                android:text="@string/widget_placeholder_temp"
                 android:textColor="#FFFFFF"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -196,16 +197,16 @@
                 android:id="@+id/widget_h4_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="3 PM"
+                android:text="@string/widget_placeholder_h3"
                 android:textColor="#E2E8F0"
-                android:textSize="10sp" />
+                android:textSize="11sp" />
 
             <TextView
                 android:id="@+id/widget_h4_icon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="🌧️"
+                android:text="@string/widget_placeholder_icon"
                 android:textSize="16sp" />
 
             <TextView
@@ -213,7 +214,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="20°"
+                android:text="@string/widget_placeholder_temp"
                 android:textColor="#FFFFFF"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -233,7 +234,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="High 23° • Low 13°"
+            android:text="@string/widget_placeholder_high_low"
             android:textColor="#E2E8F0"
             android:textSize="11sp" />
 
@@ -241,9 +242,9 @@
             android:id="@+id/widget_updated_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Live Open-Meteo"
+            android:text="@string/widget_placeholder_updated"
             android:textColor="#93C5FD"
-            android:textSize="10sp" />
+            android:textSize="11sp" />
     </LinearLayout>
 
 </LinearLayout>

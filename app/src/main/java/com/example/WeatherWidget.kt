@@ -6,8 +6,8 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.widget.RemoteViews
+import androidx.core.content.edit
 
 /**
  * Android Home Screen Weather Widget Provider & Updater.
@@ -84,37 +84,37 @@ object WeatherWidgetUpdater {
             else -> "Live Forecast"
         }
 
-        // Extract next 4 hours from hourly forecast
-        val hours = city.hourlyForecast.take(4)
+        // Extract next 4 upcoming hours starting from the current hour (rolling into tomorrow if late at night)
+        val hours = extractNextFourHours(city)
         val h1 = hours.getOrNull(0)
         val h2 = hours.getOrNull(1)
         val h3 = hours.getOrNull(2)
         val h4 = hours.getOrNull(3)
 
         val prefs = context.getSharedPreferences(PREF_WIDGET_STATE, Context.MODE_PRIVATE)
-        prefs.edit()
-            .putString(KEY_CITY_NAME, city.cityName)
-            .putString(KEY_TEMP_TEXT, tempText)
-            .putString(KEY_CONDITION_TEXT, conditionLine)
-            .putString(KEY_HIGH_LOW_TEXT, highLowLine)
-            .putString(KEY_UPDATED_TEXT, updatedLine)
+        prefs.edit {
+            putString(KEY_CITY_NAME, city.cityName)
+            putString(KEY_TEMP_TEXT, tempText)
+            putString(KEY_CONDITION_TEXT, conditionLine)
+            putString(KEY_HIGH_LOW_TEXT, highLowLine)
+            putString(KEY_UPDATED_TEXT, updatedLine)
             // Hour 1
-            .putString(KEY_H1_TIME, h1?.timeLabel?.ifBlank { "Now" } ?: "Now")
-            .putString(KEY_H1_ICON, h1?.let { conditionEmoji(it.condition, it.wmoCode) } ?: emoji)
-            .putString(KEY_H1_TEMP, h1?.let { formatTemperature(it.tempCelsius, temperatureUnit) } ?: tempText)
+            putString(KEY_H1_TIME, h1?.let { if (it.isNow) "Now" else it.timeLabel.ifBlank { "Now" } } ?: "Now")
+            putString(KEY_H1_ICON, h1?.let { conditionEmoji(it.condition, it.wmoCode) } ?: emoji)
+            putString(KEY_H1_TEMP, h1?.let { formatTemperature(it.tempCelsius, temperatureUnit) } ?: tempText)
             // Hour 2
-            .putString(KEY_H2_TIME, h2?.timeLabel?.ifBlank { "+1h" } ?: "+1h")
-            .putString(KEY_H2_ICON, h2?.let { conditionEmoji(it.condition, it.wmoCode) } ?: emoji)
-            .putString(KEY_H2_TEMP, h2?.let { formatTemperature(it.tempCelsius, temperatureUnit) } ?: tempText)
+            putString(KEY_H2_TIME, h2?.timeLabel?.ifBlank { "+1h" } ?: "+1h")
+            putString(KEY_H2_ICON, h2?.let { conditionEmoji(it.condition, it.wmoCode) } ?: emoji)
+            putString(KEY_H2_TEMP, h2?.let { formatTemperature(it.tempCelsius, temperatureUnit) } ?: tempText)
             // Hour 3
-            .putString(KEY_H3_TIME, h3?.timeLabel?.ifBlank { "+2h" } ?: "+2h")
-            .putString(KEY_H3_ICON, h3?.let { conditionEmoji(it.condition, it.wmoCode) } ?: emoji)
-            .putString(KEY_H3_TEMP, h3?.let { formatTemperature(it.tempCelsius, temperatureUnit) } ?: tempText)
+            putString(KEY_H3_TIME, h3?.timeLabel?.ifBlank { "+2h" } ?: "+2h")
+            putString(KEY_H3_ICON, h3?.let { conditionEmoji(it.condition, it.wmoCode) } ?: emoji)
+            putString(KEY_H3_TEMP, h3?.let { formatTemperature(it.tempCelsius, temperatureUnit) } ?: tempText)
             // Hour 4
-            .putString(KEY_H4_TIME, h4?.timeLabel?.ifBlank { "+3h" } ?: "+3h")
-            .putString(KEY_H4_ICON, h4?.let { conditionEmoji(it.condition, it.wmoCode) } ?: emoji)
-            .putString(KEY_H4_TEMP, h4?.let { formatTemperature(it.tempCelsius, temperatureUnit) } ?: tempText)
-            .apply()
+            putString(KEY_H4_TIME, h4?.timeLabel?.ifBlank { "+3h" } ?: "+3h")
+            putString(KEY_H4_ICON, h4?.let { conditionEmoji(it.condition, it.wmoCode) } ?: emoji)
+            putString(KEY_H4_TEMP, h4?.let { formatTemperature(it.tempCelsius, temperatureUnit) } ?: tempText)
+        }
 
         val appWidgetManager = AppWidgetManager.getInstance(context)
         val componentName = ComponentName(context, WeatherWidgetReceiver::class.java)
@@ -124,6 +124,19 @@ object WeatherWidgetUpdater {
         for (widgetId in widgetIds) {
             updateSingleWidgetFromStoredState(context, appWidgetManager, widgetId)
         }
+    }
+
+    /**
+     * Returns the next 4 upcoming hourly forecast items starting at the current hour (`isNow == true`),
+     * seamlessly rolling into tomorrow's hourly items when late in the evening.
+     */
+    fun extractNextFourHours(city: CityWeatherData): List<HourlyForecastItem> {
+        val todayHours = city.hourlyForecast
+        if (todayHours.isEmpty()) return emptyList()
+        val nowIndex = todayHours.indexOfFirst { it.isNow }.takeIf { it >= 0 } ?: 0
+        val tomorrowHours = city.tenDayForecast.getOrNull(1)?.hourlyItemsForDay.orEmpty()
+        val combined = todayHours.drop(nowIndex) + tomorrowHours
+        return combined.take(4)
     }
 
     fun updateSingleWidgetFromStoredState(
@@ -195,7 +208,6 @@ object WeatherWidgetUpdater {
      * Requests the launcher to pin the Weather Widget on Android 8.0+ (API 26+).
      */
     fun requestPinWeatherWidget(context: Context): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false
         val appWidgetManager = AppWidgetManager.getInstance(context)
         if (!appWidgetManager.isRequestPinAppWidgetSupported) return false
         val provider = ComponentName(context, WeatherWidgetReceiver::class.java)

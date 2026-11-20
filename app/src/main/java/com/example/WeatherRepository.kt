@@ -173,9 +173,16 @@ class WeatherRepository(
 
         val currentTimeString = formatIsoTimeToAmPm(currentDto?.time, fallback = "Live")
         val currentDateString = formatIsoDateToReadable(currentDto?.time)
-        val offsetHours = response.utcOffsetSeconds / 3600
-        val offsetSign = if (offsetHours >= 0) "+" else "-"
-        val tzLabel = "${response.timezoneAbbreviation} • GMT$offsetSign${abs(offsetHours)}"
+        val totalAbsMinutes = abs(response.utcOffsetSeconds) / 60
+        val offsetHours = totalAbsMinutes / 60
+        val offsetMinutes = totalAbsMinutes % 60
+        val offsetSign = if (response.utcOffsetSeconds >= 0) "+" else "-"
+        val offsetFormatted = if (offsetMinutes == 0) {
+            "GMT$offsetSign$offsetHours"
+        } else {
+            String.format(Locale.US, "GMT%s%d:%02d", offsetSign, offsetHours, offsetMinutes)
+        }
+        val tzLabel = "${response.timezoneAbbreviation} • $offsetFormatted"
 
         // Build 10-day forecast rows (Today + Next 9 days) with all 24 hours (12 AM to 11 PM) per day
         val tenDayItems = buildTenDayForecastList(
@@ -221,8 +228,8 @@ class WeatherRepository(
             condition = conditionType,
             wmoCode = wmoCode,
             conditionDescription = "$conditionDescription • Wind $windCompass $windSpeedKmh km/h",
-            airQualityIndex = 22,
-            airQualityLabel = "Live Open-Meteo",
+            airQualityIndex = 0,
+            airQualityLabel = "Live Forecast",
             details = AtmosphericDetails(
                 humidityPercent = humidity,
                 dewPointCelsius = dewPoint,

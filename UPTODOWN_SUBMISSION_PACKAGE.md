@@ -65,7 +65,7 @@ HOW THE APP WORKS:
 
 5. Weather Advisories, Notifications & Home Screen Widget:
    • Automatically highlights estimated weather advisories for heavy rain, thunderstorms, high winds, snow, and extreme temperatures based on forecast telemetry.
-   • Optional Android notifications (Daily Weather Summary, Rain Alerts, and Severe Weather Alerts) with customizable background refresh intervals (Every 1 Hour, 3 Hours, 6 Hours, 12 Hours, or Manual Only).
+   • Optional Android notifications (Daily Weather Summary, Rain Alerts, and Severe Weather Alerts) with customizable background refresh intervals (Every 30 Minutes, Every 1 Hour, Every 3 Hours, Every 6 Hours, or Manual Refresh Only).
    • Includes a resizable glassmorphic Android Home Screen Widget displaying the active city, current temperature, weather condition, high/low range, and the next 4 hours of forecast.
 
 6. Personalization & Battery Controls:
@@ -79,12 +79,12 @@ PRIVACY & DATA TRANSPARENCY:
 • Zero advertisements, zero user accounts, and zero third-party tracking analytics.
 ```
 
-### Release Notes (Version 5.1.0 – Build 6)
+### Release Notes (Version 5.3.0 – Build 8)
 ```text
-• Added full public documentation, in-app developer attribution, and public Privacy Policy link.
-• Updated minimum Android version to Android 8.0 (API 26) and upgraded Android 13+ reverse geocoding to the modern asynchronous Geocoder listener API.
-• Improved Home Screen Widget pinning/sync feedback in Settings.
-• Hardened HTTPS network configuration, coordinate validation, and release ProGuard rules.
+• Fixed Home Screen Widget & Notification Widget to display the upcoming 4 hours starting from the current hour (rolling cleanly past midnight).
+• Fixed fractional timezone offset labels (e.g., IST GMT+5:30) and Android 13+ notification permission flow.
+• Resolved Android Lint permission checks, removed hardcoded sample placeholders from widget layouts, and aligned Privacy Policy disclosures with actual app behavior.
+• Maintained Android 8.0 (API 26)+ compatibility, HTTPS-only Open-Meteo networking, and strict persistent release signing checks.
 ```
 
 ---
@@ -110,7 +110,7 @@ Uptodown requires **real, uncropped screenshots of the actual running applicatio
 | **2** | **Current Weather Details (Atmospheric Grid)** | On the **Home** tab, scroll down to the **Atmospheric Details** section and capture Screenshot 2. | 6 glassmorphic detail cards: Humidity & Dew Point, Wind Speed & Gusts, Barometric Pressure, Visibility, UV Index, and Sunrise/Sunset arc. |
 | **3** | **24-Hour Hourly Forecast & Selected Hour Panel** | On the **Home** tab, scroll to the **Hourly Forecast (12 AM – 11 PM)** card, tap any hour pill (e.g., `2 PM`), and capture Screenshot 3. | Horizontal 24-hour scrolling pills plus the expanded **Selected Time** detail panel showing feels-like temp, rain probability, precipitation (`mm`), humidity, and wind speed/direction. |
 | **4** | **10-Day Extended Forecast Screen** | Tap **10-Day** in the bottom navigation bar and capture Screenshot 4. | Day selector chips, 24-hour preview strip, and the 10-day forecast list with condition icons, rain probability badges, sunrise/sunset times, and temperature range bars. |
-| **5** | **Settings Screen** | Tap **Settings** in the bottom navigation bar and capture Screenshot 5. | App Information (`Weather`, `Version 5.1.0`), Appearance (`Dark` / `Light` / `Automatic`), Weather Animation Engine (`High` / `Low`, `Battery Saver`), Weather Preferences (`°C` / `°F`, Refresh Interval, Home Screen Widget button), Notifications, Privacy Policy, and About Developer (`Antonee`). |
+| **5** | **Settings Screen** | Tap **Settings** in the bottom navigation bar and capture Screenshot 5. | App Information (`Weather`, `Version 5.3.0`), Appearance (`Dark` / `Light` / `Automatic`), Weather Animation Engine (`High` / `Low`, `Battery Saver`), Weather Preferences (`°C` / `°F`, Refresh Interval, Home Screen Widget button), Notifications, Privacy Policy, and About Developer (`Antonee`). |
 
 ---
 
@@ -119,14 +119,14 @@ Uptodown requires **real, uncropped screenshots of the actual running applicatio
 Before clicking **Submit** on the Uptodown Developer Console:
 
 1. **Push Updated Repository to GitHub (`https://github.com/Antoneeroy/Weather.git`)**
-   - [ ] Confirm `README.md` and `PRIVACY_POLICY.md` are visible on the `main` branch so `https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md` loads publicly in a browser.
+   - [ ] Confirm `README.md`, `PRIVACY_POLICY.md`, and `privacy-policy.html` are visible on the `main` branch and `https://antoneeroy.github.io/Weather/privacy-policy.html` loads publicly without login.
 2. **Generate Signed Release APK / AAB**
-   - [ ] Export the signed **Release APK** (`com.aistudio.weather.glsmph`, `versionCode = 6`, `versionName = "5.1.0"`) via AI Studio's **Download APK / Export** menu or Gradle `assembleRelease`.
-   - [ ] Verify the APK installs cleanly on a device/emulator and launches without errors.
+   - [ ] Export the signed **Release APK** (`com.aistudio.weather.glsmph`, `versionCode = 8`, `versionName = "5.3.0"`) signed with your persistent production release keystore (`KEYSTORE_BASE64`, `STORE_PASSWORD`, `KEY_PASSWORD` in GitHub Actions Secrets).
+   - [ ] Verify the APK signature, package name, versionCode, and `minSdkVersion = 26`.
 3. **Upload Assets & Metadata in Uptodown Console**
-   - [ ] Upload the signed APK (`Version 5.1.0`, `versionCode 6`).
+   - [ ] Upload the signed APK (`Version 5.3.0`, `versionCode 8`).
    - [ ] Upload `weather_icon_512x512.png` (512 × 512 PNG) as the store icon.
    - [ ] Upload all **5 real application screenshots** (Home Screen, Atmospheric Details, 24-Hour Hourly Forecast, 10-Day Forecast, Settings Screen).
    - [ ] Paste the **Short Description** and **Full Description** from Phase 4 above.
-   - [ ] Set **Developer** to `Antonee`, **Official Website** to `https://github.com/Antoneeroy/Weather`, and **Privacy Policy URL** to `https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md`.
-   - [ ] Paste the **Release Notes** for `5.1.0` and submit for manual review.
+   - [ ] Set **Developer** to `Antonee`, **Official Website** to `https://github.com/Antoneeroy/Weather`, and **Privacy Policy URL** to `https://antoneeroy.github.io/Weather/privacy-policy.html`.
+   - [ ] Paste the **Release Notes** for `5.3.0` and submit for manual review.

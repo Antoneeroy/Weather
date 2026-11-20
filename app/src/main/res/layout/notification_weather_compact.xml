@@ -12,7 +12,7 @@
         android:id="@+id/notif_weather_icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="⛅"
+        android:text="@string/widget_placeholder_icon"
         android:textSize="28sp" />
 
     <!-- Center: City, Condition & High/Low -->
@@ -29,7 +29,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="San Francisco"
+            android:text="@string/widget_placeholder_city"
             android:textColor="#FFFFFF"
             android:textSize="15sp"
             android:textStyle="bold" />
@@ -40,7 +40,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Partly Cloudy • H: 23° L: 13°"
+            android:text="@string/widget_placeholder_condition"
             android:textColor="#BAE6FD"
             android:textSize="12sp" />
     </LinearLayout>
@@ -56,7 +56,7 @@
             android:id="@+id/notif_temperature_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="21°"
+            android:text="@string/widget_placeholder_temp"
             android:textColor="#FFFFFF"
             android:textSize="22sp"
             android:textStyle="bold" />
@@ -65,9 +65,9 @@
             android:id="@+id/notif_updated_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Live"
+            android:text="@string/widget_placeholder_updated"
             android:textColor="#93C5FD"
-            android:textSize="10sp" />
+            android:textSize="11sp" />
     </LinearLayout>
 
 </LinearLayout>

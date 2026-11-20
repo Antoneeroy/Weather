@@ -44,7 +44,7 @@
     <string name="location_unavailable_message">Device GPS location is currently unavailable. Please enable Location Services or search for a city manually.</string>
     <string name="widget_description">Premium Glassmorphism Weather Widget displaying live city temperature, condition, high/low range, and last updated time.</string>
     <string name="privacy_policy_title">Privacy Policy &amp; Data Safety</string>
-    <string name="privacy_policy_desc">Your privacy is fully protected. Location is used on-device only to look up local weather and is never tracked, stored, or shared.</string>
+    <string name="privacy_policy_desc">Location is optional and used only to fetch local weather over HTTPS from Open-Meteo. Saved locations stay locally on your device and are never tracked or sold.</string>
     <string name="privacy_policy_url_label">Privacy Policy URL: https://antoneeroy.github.io/Weather/privacy-policy.html (Repository copy: https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md)</string>
     <string name="terms_title">Terms &amp; Conditions</string>
     <string name="terms_desc">Weather forecasts and atmospheric data are provided for informational convenience using public meteorological services.</string>
@@ -53,4 +53,15 @@
     <string name="official_website_label">Official Repository: https://github.com/Antoneeroy/Weather</string>
     <string name="copyright_text">© 2026 Antonee • Weather App. All rights reserved.</string>
     <string name="open_meteo_attribution">Weather data provided by Open-Meteo under CC BY 4.0 license.</string>
+    <string name="widget_placeholder_city">Select City</string>
+    <string name="widget_placeholder_condition">Tap to choose location</string>
+    <string name="widget_placeholder_temp">--</string>
+    <string name="widget_placeholder_icon">☁️</string>
+    <string name="widget_placeholder_high_low">Open app to sync weather</string>
+    <string name="widget_placeholder_updated">Live Forecast</string>
+    <string name="widget_placeholder_rain">Rain Chance: --</string>
+    <string name="widget_placeholder_now">Now</string>
+    <string name="widget_placeholder_h1">+1h</string>
+    <string name="widget_placeholder_h2">+2h</string>
+    <string name="widget_placeholder_h3">+3h</string>
 </resources>

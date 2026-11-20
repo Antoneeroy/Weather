@@ -63,29 +63,27 @@ object WeatherNotificationHelper {
     }
 
     fun ensureNotificationChannels(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val sysMgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as? SystemNotificationManager
-                ?: return
+        val sysMgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as? SystemNotificationManager
+            ?: return
 
-            val dailyChannel = NotificationChannel(
-                CHANNEL_DAILY_WEATHER,
-                "Weather Forecast & Notification Widget",
-                SystemNotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = "Live weather status, temperature, and hourly forecast widget notifications"
-            }
-
-            val alertsChannel = NotificationChannel(
-                CHANNEL_WEATHER_ALERTS,
-                "Rain & Severe Weather Advisories",
-                SystemNotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Estimated rain, thunderstorm, high wind, and extreme temperature notifications"
-            }
-
-            sysMgr.createNotificationChannel(dailyChannel)
-            sysMgr.createNotificationChannel(alertsChannel)
+        val dailyChannel = NotificationChannel(
+            CHANNEL_DAILY_WEATHER,
+            "Weather Forecast & Notification Widget",
+            SystemNotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = "Live weather status, temperature, and hourly forecast widget notifications"
         }
+
+        val alertsChannel = NotificationChannel(
+            CHANNEL_WEATHER_ALERTS,
+            "Rain & Severe Weather Advisories",
+            SystemNotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = "Estimated rain, thunderstorm, high wind, and extreme temperature notifications"
+        }
+
+        sysMgr.createNotificationChannel(dailyChannel)
+        sysMgr.createNotificationChannel(alertsChannel)
     }
 
     /**
@@ -275,8 +273,8 @@ object WeatherNotificationHelper {
             setTextViewText(R.id.notif_updated_time, updatedTime)
         }
 
-        // 2. Expanded View with next 4 hours forecast
-        val hours = city.hourlyForecast.take(4)
+        // 2. Expanded View with next 4 upcoming hours starting from the current hour
+        val hours = WeatherWidgetUpdater.extractNextFourHours(city)
         val h1 = hours.getOrNull(0)
         val h2 = hours.getOrNull(1)
         val h3 = hours.getOrNull(2)
@@ -292,7 +290,7 @@ object WeatherNotificationHelper {
             setTextViewText(R.id.notif_exp_updated_text, "Live • $updatedTime")
 
             // Hour 1
-            setTextViewText(R.id.notif_h1_time, h1?.timeLabel?.ifBlank { "Now" } ?: "Now")
+            setTextViewText(R.id.notif_h1_time, h1?.let { if (it.isNow) "Now" else it.timeLabel.ifBlank { "Now" } } ?: "Now")
             setTextViewText(R.id.notif_h1_icon, h1?.let { WeatherWidgetUpdater.conditionEmoji(it.condition, it.wmoCode) } ?: emoji)
             setTextViewText(R.id.notif_h1_temp, h1?.let { formatTemperature(it.tempCelsius, unit) } ?: tempText)
 
@@ -322,8 +320,17 @@ object WeatherNotificationHelper {
             .setContentIntent(pendingIntent)
             .build()
 
-        runCatching {
-            NotificationManagerCompat.from(context).notify(notificationId, notification)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            try {
+                NotificationManagerCompat.from(context).notify(notificationId, notification)
+            } catch (_: SecurityException) {
+                // Gracefully ignored if notification permission was revoked concurrently
+            }
         }
     }
 
@@ -362,8 +369,17 @@ object WeatherNotificationHelper {
             .setContentIntent(pendingIntent)
             .build()
 
-        runCatching {
-            NotificationManagerCompat.from(context).notify(notificationId, notification)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            try {
+                NotificationManagerCompat.from(context).notify(notificationId, notification)
+            } catch (_: SecurityException) {
+                // Gracefully ignored if notification permission was revoked concurrently
+            }
         }
     }
 }

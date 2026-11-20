@@ -682,6 +682,72 @@ class ExampleRobolectricTest {
     }
 
     @Test
+    fun `widget_extractNextFourHours_starts_at_current_hour_and_rolls_into_tomorrow`() {
+        val baseCity = createTestCity()
+        // Mark 10 PM (hour24 == 22) as current hour
+        val updatedTodayHours = baseCity.hourlyForecast.map { h ->
+            h.copy(isNow = h.hour24 == 22)
+        }
+        val cityAt10Pm = baseCity.copy(hourlyForecast = updatedTodayHours)
+
+        val nextFour = WeatherWidgetUpdater.extractNextFourHours(cityAt10Pm)
+        assertEquals(4, nextFour.size)
+        assertEquals(22, nextFour[0].hour24) // 10 PM (Now)
+        assertTrue(nextFour[0].isNow)
+        assertEquals(23, nextFour[1].hour24) // 11 PM
+        assertEquals(0, nextFour[2].hour24)  // 12 AM (Tomorrow)
+        assertEquals(1, nextFour[3].hour24)  // 1 AM (Tomorrow)
+    }
+
+    @Test
+    fun `repository_formats_fractional_timezone_offsets_such_as_IST_GMT_plus_5_30`() {
+        val repo = WeatherRepository(context = null)
+        val istResponse = OpenMeteoForecastResponse(
+            latitude = 28.6139,
+            longitude = 77.2090,
+            timezone = "Asia/Kolkata",
+            timezoneAbbreviation = "IST",
+            utcOffsetSeconds = 19800, // +5:30
+            current = OpenMeteoCurrentDto(
+                time = "2026-11-19T14:00",
+                temperature2m = 25.0,
+                relativeHumidity2m = 48,
+                apparentTemperature = 25.0,
+                isDay = 1,
+                weatherCode = 0
+            )
+        )
+        val mapped = repo.mapResponseToCityWeatherData(
+            id = "geo_delhi",
+            cityName = "New Delhi",
+            regionAndCountry = "Delhi, India",
+            latitude = 28.6139,
+            longitude = 77.2090,
+            isCurrentLocation = false,
+            response = istResponse
+        )
+        assertEquals("IST • GMT+5:30", mapped.timeZoneOffsetLabel)
+        assertEquals("Live Forecast", mapped.airQualityLabel)
+        assertEquals(0, mapped.airQualityIndex)
+    }
+
+    @Test
+    @Config(sdk = [33])
+    fun `android_13_API_33_enforces_runtime_POST_NOTIFICATIONS_permission_gate`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        assertEquals(33, android.os.Build.VERSION.SDK_INT)
+        // Without runtime grant on API 33+, hasNotificationPermission must return false
+        assertFalse(WeatherNotificationHelper.hasNotificationPermission(context))
+        val posted = WeatherNotificationHelper.evaluateAndSendNotifications(
+            context = context,
+            city = createTestCity(),
+            settings = WeatherAppSettings(notificationsEnabled = true),
+            forceSendSummary = true
+        )
+        assertFalse(posted)
+    }
+
+    @Test
     @Config(sdk = [26])
     fun `android 8_0 Oreo API 26 compatibility and manual city without location permission`() {
         val context = ApplicationProvider.getApplicationContext<Context>()

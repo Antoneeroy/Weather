@@ -760,7 +760,7 @@ fun SettingsScreen(
                                 verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Text(
-                                    text = "• Location Privacy: Your GPS location is used strictly on-device to retrieve accurate local weather data. Your coordinates are never sent to private advertising servers, never stored, and never sold.",
+                                    text = "• Location Privacy: GPS permission is optional and foreground-only. When you tap Use My GPS, coordinates are sent over HTTPS to Open-Meteo for local forecasts and stored only locally on your device for saved cities/offline viewing — never on developer or advertising servers.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = palette.primaryText
                                 )

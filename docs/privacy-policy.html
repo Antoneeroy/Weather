@@ -132,7 +132,7 @@
       </div>
       <div class="meta-item">
         <span>Effective / Updated</span>
-        <strong>November 17, 2026 (v5.3.0)</strong>
+        <strong>November 19, 2026 (v5.3.0)</strong>
       </div>
     </div>
 
@@ -212,7 +212,7 @@
     <h2>6. Notifications, Background Refresh &amp; Widget</h2>
     <ul>
       <li><strong>Optional Weather Notifications:</strong> When enabled in Settings, the app posts local notifications for Daily Weather Summaries, Rain Alerts, and estimated Severe Weather Advisories.</li>
-      <li><strong>Periodic Background Sync (<code>WorkManager</code>):</strong> When periodic refresh is enabled, <code>WeatherBackgroundSyncWorker</code> refreshes forecast data using the <strong>stored coordinates</strong> of your saved city in DataStore when connected to the internet, updating the local cache and Home Screen Widget. Setting refresh to <strong>Manual Only</strong> with notifications disabled cancels all background work.</li>
+      <li><strong>Periodic Background Sync (<code>WorkManager</code>):</strong> When periodic refresh (<strong>Every 30 Minutes</strong>, <strong>Every 1 Hour</strong>, <strong>Every 3 Hours</strong>, or <strong>Every 6 Hours</strong>) or notifications are enabled, <code>WeatherBackgroundSyncWorker</code> refreshes forecast data using the <strong>stored coordinates</strong> of your saved city in DataStore when connected to the internet, updating the local cache and Home Screen Widget. Setting refresh to <strong>Manual Refresh Only</strong> with notifications disabled cancels all background work.</li>
     </ul>
 
     <h2>7. Third-Party SDKs &amp; Libraries Disclosed</h2>

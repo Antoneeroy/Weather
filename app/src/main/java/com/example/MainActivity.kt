@@ -96,6 +96,7 @@ fun WeatherAppRoot(
     val context = LocalContext.current
     var currentDestination by rememberSaveable { mutableStateOf(WeatherDestination.HOME) }
     var showLocationDisclosureDialog by rememberSaveable { mutableStateOf(false) }
+    var pendingTestNotificationAfterGrant by rememberSaveable { mutableStateOf(false) }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -112,8 +113,12 @@ fun WeatherAppRoot(
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
+        val shouldDispatchTest = pendingTestNotificationAfterGrant
+        pendingTestNotificationAfterGrant = false
         if (granted) {
-            viewModel.dispatchTestWeatherNotification()
+            if (shouldDispatchTest) {
+                viewModel.dispatchTestWeatherNotification()
+            }
         } else {
             viewModel.toggleNotificationsMaster(false)
         }
@@ -123,6 +128,7 @@ fun WeatherAppRoot(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             !WeatherNotificationHelper.hasNotificationPermission(context)
         ) {
+            pendingTestNotificationAfterGrant = true
             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
             viewModel.dispatchTestWeatherNotification()
@@ -156,8 +162,8 @@ fun WeatherAppRoot(
             title = { Text("Local Weather Access") },
             text = {
                 Text(
-                    "Allow Weather to access your device location to show live local forecasts. " +
-                        "Your location is used strictly on-device to fetch weather and is never stored on private servers or shared. " +
+                    "Allow Weather to access your device location to fetch live local forecasts over HTTPS from Open-Meteo. " +
+                        "Saved location coordinates stay locally on your device for offline viewing and are never sent to developer or advertising servers. " +
                         "You can also search any city manually without granting GPS access."
                 )
             },
