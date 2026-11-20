@@ -41,28 +41,34 @@ fun WeatherConditionArtworkIcon(
     iconSize: Dp = 44.dp,
     animationsEnabled: Boolean = true
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "icon_anim")
-    val angle by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(18000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "sun_spin"
-    )
-    val floatOffset by infiniteTransition.animateFloat(
-        initialValue = -2f,
-        targetValue = 2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2200, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "cloud_bob"
-    )
-
-    val effectiveAngle = if (animationsEnabled) angle else 0f
-    val effectiveBob = if (animationsEnabled) floatOffset else 0f
+    val effectiveAngle: Float
+    val effectiveBob: Float
+    if (animationsEnabled) {
+        val infiniteTransition = rememberInfiniteTransition(label = "icon_anim")
+        val angle by infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(18000, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "sun_spin"
+        )
+        val floatOffset by infiniteTransition.animateFloat(
+            initialValue = -2f,
+            targetValue = 2f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(2200, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "cloud_bob"
+        )
+        effectiveAngle = angle
+        effectiveBob = floatOffset
+    } else {
+        effectiveAngle = 0f
+        effectiveBob = 0f
+    }
 
     Canvas(modifier = modifier.size(iconSize)) {
         val w = size.width

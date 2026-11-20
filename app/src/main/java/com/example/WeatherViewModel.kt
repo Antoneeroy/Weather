@@ -176,7 +176,7 @@ class WeatherViewModel(
             wmoCode = 2,
             conditionDescription = "Syncing live forecast…",
             airQualityIndex = 0,
-            airQualityLabel = "Open-Meteo",
+            airQualityLabel = "Syncing",
             details = AtmosphericDetails(
                 humidityPercent = 0,
                 dewPointCelsius = 0,

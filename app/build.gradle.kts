@@ -16,8 +16,8 @@ android {
     applicationId = "com.aistudio.weather.glsmph"
     minSdk = 26
     targetSdk = 36
-    versionCode = 8
-    versionName = "5.3.0"
+    versionCode = 9
+    versionName = "5.3.1"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

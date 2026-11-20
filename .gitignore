@@ -10,10 +10,20 @@
 /.idea/assetWizardSettings.xml
 .DS_Store
 /build
+build/
+app/build/
+.build-outputs/
+app/public/
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+*.apk
+*.aab
+*.apks
+*.tmp
+*.log
+*.bak
 .env
 .env.*
 !.env.example
@@ -25,4 +35,5 @@ debug.keystore
 *.pfx
 keystore.properties
 signing.properties
+*keystore-base64.txt
 

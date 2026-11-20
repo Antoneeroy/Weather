@@ -2,7 +2,7 @@
 
 **Project Name:** Weather  
 **Package Name:** `com.aistudio.weather.glsmph`  
-**Version:** `5.3.0` (`versionCode = 8`)  
+**Version:** `5.3.1` (`versionCode = 9`)  
 **Minimum Android SDK:** Android 8.0 Oreo (API 26)  
 **Target Android SDK:** API 36  
 **Developer:** Antonee  
@@ -15,7 +15,7 @@
 | Audited Area | Findings | Resolution Implemented |
 | :--- | :--- | :--- |
 | **Uptodown Rejection Cause** | Rejected with: *"Not enough information was provided to be able to review the app. Please include a description of how your app works along with screenshots and an icon."* Repository lacked `README.md`, `PRIVACY_POLICY.md`, a standalone 512×512 PNG store icon, and complete Uptodown listing copy. | Added root `README.md`, `PRIVACY_POLICY.md`, `UPTODOWN_SUBMISSION_PACKAGE.md`, a 512×512 PNG icon (`weather_icon_512x512.png`), and complete store descriptions & screenshot guide. |
-| **Gradle & SDK Configuration** | `minSdk` was set to `24` instead of Android 8.0 (`API 26`); `androidx.navigation.compose` was declared in `app/build.gradle.kts` but unused in source code. | Updated `minSdk = 26`, bumped `versionCode = 8` and `versionName = "5.3.0"`, and commented out the unused `androidx.navigation.compose` dependency. |
+| **Gradle & SDK Configuration** | `minSdk` was set to `24` instead of Android 8.0 (`API 26`); `androidx.navigation.compose` was declared in `app/build.gradle.kts` but unused in source code. | Updated `minSdk = 26`, bumped `versionCode = 9` and `versionName = "5.3.1"`, and commented out the unused `androidx.navigation.compose` dependency. |
 | **Location & Deprecated APIs** | `LocationManager.reverseGeocodeCoordinates` called the deprecated synchronous `Geocoder.getFromLocation(lat, lon, 1)` on Android 13+ (API 33+). | Upgraded to the asynchronous `Geocoder.GeocodeListener` API on Android 13+ (`TIRAMISU`) with a 3.5-second coroutine timeout and safe fallback. |
 | **Home Screen Widget Feedback** | Tapping *"Add or Update Home Screen Widget"* in Settings stored its status message in `notificationStatusMessage`, which was only visible when the Notifications master switch was enabled. | Added a dedicated status feedback label directly inside the **Weather Preferences** card below the widget button so users always see immediate confirmation. |
 | **Consumer Copy & Metadata** | Technical labels (`"Live Open-Meteo"`, `"Open-Meteo Geocoding Matches"`, `"Live API"`) appeared in user-facing UI, and Settings lacked the developer name (`Antonee`), repository URL, and public Privacy Policy URL. | Updated UI labels to consumer-friendly text (`"Live Forecast"`, `"Matching Cities"`, `"Live Weather"`) and displayed Developer (`Antonee`), Official Repository URL, and Privacy Policy URL in Settings. |
@@ -29,8 +29,8 @@
 - **Category:** `Weather` (or `Lifestyle > Weather`)
 - **Developer / Author:** `Antonee`
 - **Package Name:** `com.aistudio.weather.glsmph`
-- **Version Name:** `5.3.0`
-- **Version Code:** `8`
+- **Version Name:** `5.3.1`
+- **Version Code:** `9`
 - **License:** Free (No Ads, No In-App Purchases)
 - **Minimum Operating System:** Android 8.0 (API 26)
 - **Official Website:** `https://github.com/Antoneeroy/Weather`
@@ -79,12 +79,12 @@ PRIVACY & DATA TRANSPARENCY:
 • Zero advertisements, zero user accounts, and zero third-party tracking analytics.
 ```
 
-### Release Notes (Version 5.3.0 – Build 8)
+### Release Notes (Version 5.3.1 – Build 9)
 ```text
 • Fixed Home Screen Widget & Notification Widget to display the upcoming 4 hours starting from the current hour (rolling cleanly past midnight).
 • Fixed fractional timezone offset labels (e.g., IST GMT+5:30) and Android 13+ notification permission flow.
 • Resolved Android Lint permission checks, removed hardcoded sample placeholders from widget layouts, and aligned Privacy Policy disclosures with actual app behavior.
-• Maintained Android 8.0 (API 26)+ compatibility, HTTPS-only Open-Meteo networking, and strict persistent release signing checks.
+• Maintained Android 8.0 (API 26)+ compatibility, HTTPS-only Open-Meteo networking, DataStore persistence across updates, and strict persistent release signing checks.
 ```
 
 ---
@@ -110,7 +110,7 @@ Uptodown requires **real, uncropped screenshots of the actual running applicatio
 | **2** | **Current Weather Details (Atmospheric Grid)** | On the **Home** tab, scroll down to the **Atmospheric Details** section and capture Screenshot 2. | 6 glassmorphic detail cards: Humidity & Dew Point, Wind Speed & Gusts, Barometric Pressure, Visibility, UV Index, and Sunrise/Sunset arc. |
 | **3** | **24-Hour Hourly Forecast & Selected Hour Panel** | On the **Home** tab, scroll to the **Hourly Forecast (12 AM – 11 PM)** card, tap any hour pill (e.g., `2 PM`), and capture Screenshot 3. | Horizontal 24-hour scrolling pills plus the expanded **Selected Time** detail panel showing feels-like temp, rain probability, precipitation (`mm`), humidity, and wind speed/direction. |
 | **4** | **10-Day Extended Forecast Screen** | Tap **10-Day** in the bottom navigation bar and capture Screenshot 4. | Day selector chips, 24-hour preview strip, and the 10-day forecast list with condition icons, rain probability badges, sunrise/sunset times, and temperature range bars. |
-| **5** | **Settings Screen** | Tap **Settings** in the bottom navigation bar and capture Screenshot 5. | App Information (`Weather`, `Version 5.3.0`), Appearance (`Dark` / `Light` / `Automatic`), Weather Animation Engine (`High` / `Low`, `Battery Saver`), Weather Preferences (`°C` / `°F`, Refresh Interval, Home Screen Widget button), Notifications, Privacy Policy, and About Developer (`Antonee`). |
+| **5** | **Settings Screen** | Tap **Settings** in the bottom navigation bar and capture Screenshot 5. | App Information (`Weather`, `Version 5.3.1`), Appearance (`Dark` / `Light` / `Automatic`), Weather Animation Engine (`High` / `Low`, `Battery Saver`), Weather Preferences (`°C` / `°F`, Refresh Interval, Home Screen Widget button), Notifications, Privacy Policy, and About Developer (`Antonee`). |
 
 ---
 
@@ -121,12 +121,12 @@ Before clicking **Submit** on the Uptodown Developer Console:
 1. **Push Updated Repository to GitHub (`https://github.com/Antoneeroy/Weather.git`)**
    - [ ] Confirm `README.md`, `PRIVACY_POLICY.md`, and `privacy-policy.html` are visible on the `main` branch and `https://antoneeroy.github.io/Weather/privacy-policy.html` loads publicly without login.
 2. **Generate Signed Release APK / AAB**
-   - [ ] Export the signed **Release APK** (`com.aistudio.weather.glsmph`, `versionCode = 8`, `versionName = "5.3.0"`) signed with your persistent production release keystore (`KEYSTORE_BASE64`, `STORE_PASSWORD`, `KEY_PASSWORD` in GitHub Actions Secrets).
+   - [ ] Export the signed **Release APK** (`com.aistudio.weather.glsmph`, `versionCode = 9`, `versionName = "5.3.1"`) signed with your persistent production release keystore (`KEYSTORE_BASE64`, `STORE_PASSWORD`, `KEY_PASSWORD` in GitHub Actions Secrets).
    - [ ] Verify the APK signature, package name, versionCode, and `minSdkVersion = 26`.
 3. **Upload Assets & Metadata in Uptodown Console**
-   - [ ] Upload the signed APK (`Version 5.3.0`, `versionCode 8`).
+   - [ ] Upload the signed APK (`Version 5.3.1`, `versionCode 9`).
    - [ ] Upload `weather_icon_512x512.png` (512 × 512 PNG) as the store icon.
    - [ ] Upload all **5 real application screenshots** (Home Screen, Atmospheric Details, 24-Hour Hourly Forecast, 10-Day Forecast, Settings Screen).
    - [ ] Paste the **Short Description** and **Full Description** from Phase 4 above.
    - [ ] Set **Developer** to `Antonee`, **Official Website** to `https://github.com/Antoneeroy/Weather`, and **Privacy Policy URL** to `https://antoneeroy.github.io/Weather/privacy-policy.html`.
-   - [ ] Paste the **Release Notes** for `5.3.0` and submit for manual review.
+   - [ ] Paste the **Release Notes** for `5.3.1` and submit for manual review.

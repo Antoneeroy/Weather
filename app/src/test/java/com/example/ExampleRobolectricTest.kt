@@ -15,8 +15,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.test.core.app.ApplicationProvider
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -610,14 +618,34 @@ class ExampleRobolectricTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         assertEquals("com.aistudio.weather.glsmph", context.packageName)
         assertEquals("Weather", context.getString(R.string.app_name))
-        assertEquals("Version 5.3.0", context.getString(R.string.settings_app_version))
+        assertEquals("Version 5.3.1", context.getString(R.string.settings_app_version))
         assertTrue(context.getString(R.string.about_developer_desc).contains("Antonee"))
         assertTrue(
             context.getString(R.string.privacy_policy_url_label)
                 .contains("https://github.com/Antoneeroy/Weather/blob/main/PRIVACY_POLICY.md")
         )
 
-        val vm = WeatherViewModel(appContext = context, autoFetchOnInit = false)
+        val offlineNoOpRepo = WeatherRepository(
+            context = null,
+            weatherApiService = object : WeatherApiService {
+                override suspend fun getForecast(
+                    latitude: Double,
+                    longitude: Double,
+                    current: String,
+                    hourly: String,
+                    daily: String,
+                    timezone: String,
+                    forecastDays: Int
+                ): OpenMeteoForecastResponse = throw IOException("Offline test stub")
+            }
+        )
+        val vm = WeatherViewModel(
+            appContext = context,
+            repository = offlineNoOpRepo,
+            locationManager = LocationManager(context),
+            weatherPreferences = null,
+            autoFetchOnInit = false
+        )
 
         // Location permission denied state
         vm.onLocationPermissionDenied()
@@ -631,11 +659,13 @@ class ExampleRobolectricTest {
         assertTrue(vm.uiState.value.notificationStatusMessage!!.contains("Widget", ignoreCase = true))
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `in_place_update_preserves_saved_cities_favorites_offline_cache_and_user_settings`() = runTest {
+    fun `in_place_update_preserves_saved_cities_favorites_offline_cache_and_user_settings`() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val prefsBeforeUpdate = WeatherPreferences(context)
+        val tempFile = File.createTempFile("weather_update_test_", ".preferences_pb").apply {
+            delete()
+            deleteOnExit()
+        }
 
         val savedParis = createTestCity(id = "user_paris", cityName = "Paris")
         val savedTokyo = createTestCity(
@@ -661,24 +691,82 @@ class ExampleRobolectricTest {
             refreshInterval = RefreshIntervalOption.EVERY_3_HOURS
         )
 
-        // Simulate state saved prior to an in-place APK update
+        // Phase A: Simulate user state saved on disk prior to an in-place APK update
+        val scope1 = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        val ds1 = PreferenceDataStoreFactory.create(scope = scope1) { tempFile }
+        val prefsBeforeUpdate = WeatherPreferences(context, ds1)
         prefsBeforeUpdate.saveSettings(customSettings)
         prefsBeforeUpdate.saveFavoriteCityIds(setOf("user_tokyo"))
         prefsBeforeUpdate.saveSelectedCityId("user_tokyo")
         prefsBeforeUpdate.saveCustomCitiesList(listOf(savedParis, savedTokyo), setOf("user_tokyo"))
         prefsBeforeUpdate.cacheLiveCityWeather(savedTokyo, "8:15 AM")
+        scope1.cancel()
+        scope1.coroutineContext[Job]?.join()
 
-        // Simulate new WeatherPreferences instance after installing new versionCode over existing app
-        val prefsAfterUpdate = WeatherPreferences(context)
+        // Phase B: Re-open the exact same DataStore file after installing incremented versionCode
+        val scope2 = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        val ds2 = PreferenceDataStoreFactory.create(scope = scope2) { tempFile }
+        val prefsAfterUpdate = WeatherPreferences(context, ds2)
+        val restoredSettings = prefsAfterUpdate.settingsFlow.first()
+        val restoredSelectedId = prefsAfterUpdate.selectedCityIdFlow.first()
+        val restoredFavorites = prefsAfterUpdate.favoriteCityIdsFlow.first()
         val restoredRecords = prefsAfterUpdate.loadSavedCitiesRecords()
         val restoredCachedTokyo = prefsAfterUpdate.getCachedCityWeather("user_tokyo")
+        scope2.cancel()
+        scope2.coroutineContext[Job]?.join()
+        tempFile.delete()
 
+        assertEquals(ThemeModeOption.LIGHT, restoredSettings.themeMode)
+        assertEquals(TemperatureUnit.FAHRENHEIT, restoredSettings.temperatureUnit)
+        assertEquals(RefreshIntervalOption.EVERY_3_HOURS, restoredSettings.refreshInterval)
+        assertEquals("user_tokyo", restoredSettings.defaultCityId)
+        assertEquals("user_tokyo", restoredSelectedId)
+        assertTrue(restoredFavorites.contains("user_tokyo"))
         assertEquals(2, restoredRecords.size)
         assertTrue(restoredRecords.any { it.id == "user_paris" && it.cityName == "Paris" })
         assertTrue(restoredRecords.any { it.id == "user_tokyo" && it.isFavorite })
         assertNotNull(restoredCachedTokyo)
         assertEquals("Tokyo", restoredCachedTokyo?.weatherData?.cityName)
         assertEquals("8:15 AM", restoredCachedTokyo?.cachedAtFormatted)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `manual_city_search_and_gps_permission_check_work_without_crashing`() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val locManager = LocationManager(context)
+        // Without runtime GPS grant in test sandbox, fetchCurrentDeviceLocation returns PermissionDenied cleanly
+        val locResult = locManager.fetchCurrentDeviceLocation()
+        assertTrue(locResult is LocationFetchResult.PermissionDenied)
+
+        val fakeGeocoding = object : GeocodingService {
+            override suspend fun searchLocations(
+                name: String,
+                count: Int,
+                language: String,
+                format: String
+            ): GeocodingSearchResponse {
+                return GeocodingSearchResponse(
+                    results = listOf(
+                        GeocodingLocationDto(
+                            id = 1273294L,
+                            name = "New Delhi",
+                            latitude = 28.6139,
+                            longitude = 77.2090,
+                            country = "India",
+                            admin1 = "Delhi"
+                        )
+                    )
+                )
+            }
+        }
+        val repo = WeatherRepository(context = null, geocodingService = fakeGeocoding)
+        val searchResult = repo.searchCities("New Delhi")
+        assertTrue(searchResult is WeatherApiResult.Success)
+        val matches = (searchResult as WeatherApiResult.Success).data
+        assertEquals(1, matches.size)
+        assertEquals("New Delhi", matches.first().name)
+        assertEquals("Delhi, India", matches.first().formattedRegionAndCountry)
     }
 
     @Test

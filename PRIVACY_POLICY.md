@@ -1,10 +1,10 @@
 # Privacy Policy for Weather (`com.aistudio.weather.glsmph`)
 
 - **Effective Date:** November 13, 2026
-- **Last Updated:** November 19, 2026
+- **Last Updated:** November 20, 2026
 - **Application Name:** Weather
 - **Package Name:** `com.aistudio.weather.glsmph`
-- **Version:** `5.3.0` (`versionCode = 8`)
+- **Version:** `5.3.1` (`versionCode = 9`)
 - **Developer:** Antonee
 - **Official Repository:** [https://github.com/Antoneeroy/Weather](https://github.com/Antoneeroy/Weather)
 - **GitHub Pages Privacy Policy URL:** [https://antoneeroy.github.io/Weather/privacy-policy.html](https://antoneeroy.github.io/Weather/privacy-policy.html)

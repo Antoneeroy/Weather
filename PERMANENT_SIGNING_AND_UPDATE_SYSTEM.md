@@ -13,16 +13,16 @@ This document defines the **Permanent Production Signing & In-Place Update Syste
 | Requirement | App 1: **Weather** (`Antoneeroy/Weather`) | App 2: **Aroy Player** (`Antoneeroy/Aroy-player-v1`) |
 | :--- | :--- | :--- |
 | **Package Name (`applicationId`)** | `com.aistudio.weather.glsmph` *(Permanent)* | `com.aistudio.aroyplayer.vxkmp` *(Permanent)* |
-| **Release Version Code** | `8` *(Incremented from `7`)* | `222` *(Incremented from `221`)* |
-| **Release Version Name** | `5.3.0` | `2.2.2` |
+| **Release Version Code** | `9` *(Incremented from `8`)* | `222` *(Incremented from `221`)* |
+| **Release Version Name** | `5.3.1` | `2.2.2` |
 | **Minimum SDK (`minSdk`)** | `26` (Android 8.0 Oreo+) | `26` (Android 8.0 Oreo+) |
 | **Target / Compile SDK** | `36` | `36` |
 | **Dedicated Keystore File Name (Offline Backup)** | `weather-release-key.jks` | `aroy-player-release-key.jks` |
 | **Keystore Key Alias** | `upload` | `upload` |
 | **GitHub Actions Secrets** | `KEYSTORE_BASE64`, `STORE_PASSWORD`, `KEY_PASSWORD` | `KEYSTORE_BASE64`, `STORE_PASSWORD`, `KEY_PASSWORD` |
 | **Temporary Keystore Generation (`keytool -genkeypair`)** | **100% Disabled** (Fails fast if secrets are missing) | **100% Disabled** (Fails fast if secrets are missing) |
-| **Release Build Task** | `gradle assembleRelease` | `gradle assembleRelease` |
-| **Actions Artifact Name** | `app-release-apk` (`app-release.apk`) | `aroy-player-release-apk` (`app-release.apk`) |
+| **Release Build Task** | `gradle assembleRelease bundleRelease` | `gradle assembleRelease` |
+| **Actions Artifact Name** | `weather-release-artifacts` (`app-release.apk`, `app-release.aab`) | `aroy-player-release-apk` (`app-release.apk`) |
 | **In-Place Data & Settings Storage** | Jetpack DataStore (`weather_phase5_preferences`) | Room DB (`aroy_player.db`, `version = 5`) + Preferences |
 
 ---

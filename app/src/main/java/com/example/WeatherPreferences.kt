@@ -1,6 +1,8 @@
 package com.example
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -71,7 +73,10 @@ data class CachedCityWeatherSnapshot(
 /**
  * Persistent preferences and offline weather cache manager (Phase 5).
  */
-class WeatherPreferences(private val context: Context) {
+class WeatherPreferences(
+    private val context: Context,
+    private val dataStore: DataStore<Preferences> = context.weatherDataStore
+) {
 
     companion object {
         val KEY_THEME_MODE = stringPreferencesKey("theme_mode_option")
@@ -122,7 +127,7 @@ class WeatherPreferences(private val context: Context) {
         }
     }
 
-    val settingsFlow: Flow<WeatherAppSettings> = context.weatherDataStore.data.map { prefs ->
+    val settingsFlow: Flow<WeatherAppSettings> = dataStore.data.map { prefs ->
         val themeModeName = prefs[KEY_THEME_MODE] ?: ThemeModeOption.DARK.name
         val themeMode = runCatching { ThemeModeOption.valueOf(themeModeName) }
             .getOrDefault(ThemeModeOption.DARK)
@@ -170,16 +175,16 @@ class WeatherPreferences(private val context: Context) {
         )
     }
 
-    val favoriteCityIdsFlow: Flow<Set<String>> = context.weatherDataStore.data.map { prefs ->
+    val favoriteCityIdsFlow: Flow<Set<String>> = dataStore.data.map { prefs ->
         prefs[KEY_FAVORITE_CITY_IDS] ?: emptySet()
     }
 
-    val selectedCityIdFlow: Flow<String?> = context.weatherDataStore.data.map { prefs ->
+    val selectedCityIdFlow: Flow<String?> = dataStore.data.map { prefs ->
         prefs[KEY_SELECTED_CITY_ID] ?: prefs[KEY_DEFAULT_CITY_ID]?.takeIf { it.isNotBlank() }
     }
 
     suspend fun saveSettings(settings: WeatherAppSettings) {
-        context.weatherDataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[KEY_THEME_MODE] = settings.themeMode.name
             prefs[KEY_DARK_THEME] = settings.isDarkTheme
             prefs[KEY_TEMP_UNIT] = settings.temperatureUnit.name
@@ -199,7 +204,7 @@ class WeatherPreferences(private val context: Context) {
     }
 
     suspend fun saveSelectedCityId(cityId: String?) {
-        context.weatherDataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             if (cityId.isNullOrBlank()) {
                 prefs.remove(KEY_SELECTED_CITY_ID)
             } else {
@@ -209,7 +214,7 @@ class WeatherPreferences(private val context: Context) {
     }
 
     suspend fun saveFavoriteCityIds(favoriteIds: Set<String>) {
-        context.weatherDataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[KEY_FAVORITE_CITY_IDS] = favoriteIds
         }
     }
@@ -226,13 +231,13 @@ class WeatherPreferences(private val context: Context) {
             )
         }
         val json = runCatching { savedCitiesAdapter.toJson(records) }.getOrNull() ?: return
-        context.weatherDataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[KEY_SAVED_CUSTOM_CITIES_JSON] = json
         }
     }
 
     suspend fun loadSavedCitiesRecords(): List<SavedCityRecord> {
-        val prefs = context.weatherDataStore.data.first()
+        val prefs = dataStore.data.first()
         val json = prefs[KEY_SAVED_CUSTOM_CITIES_JSON] ?: return emptyList()
         return runCatching { savedCitiesAdapter.fromJson(json).orEmpty() }
             .getOrDefault(emptyList())
@@ -245,7 +250,7 @@ class WeatherPreferences(private val context: Context) {
         city: CityWeatherData,
         timestampFormatted: String
     ) {
-        val prefs = context.weatherDataStore.data.first()
+        val prefs = dataStore.data.first()
         val existingJson = prefs[KEY_OFFLINE_WEATHER_CACHE_JSON]
         val currentMap = if (!existingJson.isNullOrBlank()) {
             runCatching { cachedSnapshotsAdapter.fromJson(existingJson).orEmpty().toMutableMap() }
@@ -266,7 +271,7 @@ class WeatherPreferences(private val context: Context) {
         )
 
         val updatedJson = runCatching { cachedSnapshotsAdapter.toJson(currentMap) }.getOrNull() ?: return
-        context.weatherDataStore.edit { mutPrefs ->
+        dataStore.edit { mutPrefs ->
             mutPrefs[KEY_OFFLINE_WEATHER_CACHE_JSON] = updatedJson
         }
     }
@@ -276,7 +281,7 @@ class WeatherPreferences(private val context: Context) {
      * Ensures `isLiveData = false` and `isCachedOfflineData = true` so cached data is never shown as live.
      */
     suspend fun getCachedCityWeather(cityId: String): CachedCityWeatherSnapshot? {
-        val prefs = context.weatherDataStore.data.first()
+        val prefs = dataStore.data.first()
         val existingJson = prefs[KEY_OFFLINE_WEATHER_CACHE_JSON] ?: return null
         val map = runCatching { cachedSnapshotsAdapter.fromJson(existingJson).orEmpty() }
             .getOrDefault(emptyMap())
@@ -294,7 +299,7 @@ class WeatherPreferences(private val context: Context) {
      * Loads all cached city snapshots so saved cities immediately have their last cached weather offline.
      */
     suspend fun getAllCachedSnapshots(): Map<String, CachedCityWeatherSnapshot> {
-        val prefs = context.weatherDataStore.data.first()
+        val prefs = dataStore.data.first()
         val existingJson = prefs[KEY_OFFLINE_WEATHER_CACHE_JSON] ?: return emptyMap()
         return runCatching { cachedSnapshotsAdapter.fromJson(existingJson).orEmpty() }
             .getOrDefault(emptyMap())
